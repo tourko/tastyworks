@@ -1,7 +1,3 @@
-library(dplyr)
-library(stringr)
-library(rebus)
-
 #
 # Define commonly used patterns
 #
@@ -99,19 +95,19 @@ transaction_blocks$option = list(
   augment = function(df) {
     df %>%
       # Convert string values in the columns to the appropriate data types
-      mutate(
+      dplyr::mutate(
         # Convert to factor: "B" -> "BUY", "S" -> "SELL"
         buy_sell        = factor(buy_sell, levels = c("B", "S"), labels = c("BUY", "SELL")),
         trade_date      = lubridate::mdy(trade_date),
         quantity        = as.integer(quantity),
         price           = as.numeric(price),
         # Drop "," as thuosands separator and convert to numeric
-        principal       = as.numeric(str_replace_all(principal, ",", "")),
+        principal       = as.numeric(stringr::str_replace_all(principal, ",", "")),
         commission      = as.numeric(commission),
         transaction_fee = as.numeric(transaction_fee),
         additional_fee  = as.numeric(additional_fee),
         # Drop "," as thuosands separator and convert to numeric
-        net_amount      = as.numeric(str_replace_all(net_amount, ",", "")),
+        net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
         option_type     = factor(option_type, levels = c("CALL", "PUT")),
         expiration_date = lubridate::mdy(expiration_date),
         strike          = as.numeric(strike),
@@ -122,7 +118,7 @@ transaction_blocks$option = list(
         # Add "instrument" column and set its value to "OPTION"
         instrument      = factor("OPTION", levels = c("STOCK", "OPTION"))) %>%
       # Change columns' order
-      select(
+      dplyr::select(
         trade_date,
         reason,
         open_close,
@@ -193,28 +189,28 @@ transaction_blocks$stock = list(
   augment = function(df) {
     df %>%
       # Convert string values in the columns to the appropriate data types
-      mutate(
+      dplyr::mutate(
         # Convert to factor: "B" -> "BUY", "S" -> "SELL"
         buy_sell        = factor(buy_sell, levels = c("B", "S"), labels = c("BUY", "SELL")),
         trade_date      = lubridate::mdy(trade_date),
         quantity        = as.integer(quantity),
         price           = as.numeric(price),
         # Drop "," as thuosands separator and convert to numeric
-        principal       = as.numeric(str_replace_all(principal, ",", "")),
+        principal       = as.numeric(stringr::str_replace_all(principal, ",", "")),
         commission      = as.numeric(commission),
         transaction_fee = as.numeric(transaction_fee),
         additional_fee  = as.numeric(additional_fee),
         # Drop "," as thuosands separator and convert to numeric
-        net_amount      = as.numeric(str_replace_all(net_amount, ",", "")),
+        net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
         # Convert to factor
         reason          = factor(reason, levels = c("UNSOLICITED", "ASSIGNED", "EXERCISED")),
         # If transaction_fee is 0, then it's opening trade, otherwise closing trade
-        open_close      = factor(if_else(transaction_fee == 0, "OPEN", "CLOSE"),
+        open_close      = factor(dplyr::if_else(transaction_fee == 0, "OPEN", "CLOSE"),
                                  levels = c("OPEN", "CLOSE")),
         # Add "instrument" column and set its value to "STOCK"
         instrument      = factor("STOCK", levels = c("STOCK", "OPTION"))) %>%
       # Change columns' order
-      select(
+      dplyr::select(
         trade_date,
         reason,
         open_close,
@@ -226,7 +222,7 @@ transaction_blocks$stock = list(
         net_amount,
         cusip,
         tag_number,
-        everything())
+        dplyr::everything())
   }
 )
 
@@ -273,7 +269,7 @@ transaction_blocks$assigned = list(
       # Apply the same augment function as to the stock
       transaction_blocks$stock$augment() %>%
       # Convert "assigned_qty" to integer
-      mutate(assigned_qty = as.integer(df$assigned_qty))
+      dplyr::mutate(assigned_qty = as.integer(df$assigned_qty))
   }
 )
 
@@ -320,8 +316,8 @@ total_block <- list(
   augment = function(df) {
     df %>%
       # Convert number of shares to integer and dollars to nummeric
-      mutate(quantity = as.integer(shares),
-             net_amount = as.numeric(str_replace_all(dollars, ",", "")))
+      dplyr::mutate(quantity   = as.integer(shares),
+                    net_amount = as.numeric(stringr::str_replace_all(dollars, ",", "")))
   }
 )
 
@@ -339,7 +335,7 @@ parse_transaction_lines <- function(lines, block) {
   #   $ 4: logi [1:53] FALSE FALSE FALSE FALSE FALSE FALSE ...
   # Each vector has as may elements as there are lines.
   # An element in a vector indicates if a lines matched a corresponding pattern.
-  l <- purrr::map(block$patterns, ~ lines %>% str_detect(pattern = .x))
+  l <- purrr::map(block$patterns, ~ lines %>% stringr::str_detect(pattern = .x))
 
   # Convert the list into a matrix with 4 rows and as many columns as there are lines.
   # Example:
@@ -381,7 +377,7 @@ parse_transaction_lines <- function(lines, block) {
     # Apply lines' patterns to all lines in the file
     purrr::map(block$patterns,
                # Extracts tokens from each line matching a pattern
-               ~ lines[all_transaction_lines] %>% str_match(pattern = .x))
+               ~ lines[all_transaction_lines] %>% stringr::str_match(pattern = .x))
 
   tokens <- tokens %>%
     # The first column in each dataframe contains the entire matched line and we don't need it
@@ -392,7 +388,7 @@ parse_transaction_lines <- function(lines, block) {
   # Each row in the dataframes represents part of a transaction.
   # Glue rows in each dataframe together, so that the resulting dataframe
   # has one row per transaction.
-  transactions <- purrr::map_dfc(tokens, as_tibble)
+  transactions <- purrr::map_dfc(tokens, dplyr::as_tibble)
 
   if ( !purrr::is_empty(transactions) ) {
     # Add column names
@@ -405,8 +401,8 @@ parse_transaction_lines <- function(lines, block) {
     # It will be used for sorting the transactions,
     # so that they appear in the same order as in the confrimation.
     transactions <- transactions %>%
-      mutate(transaction_id = str_c("T", str_pad(first_transaction_lines, 5, pad = "0"))) %>%
-      select(transaction_id, everything())
+      dplyr::mutate(transaction_id = stringr::str_c("T", stringr::str_pad(first_transaction_lines, 5, pad = "0"))) %>%
+      dplyr::select(transaction_id, dplyr::everything())
   }
 
   return(transactions)
@@ -419,9 +415,9 @@ parse_total_lines <- function(lines, block) {
   # Apply total_line pattern to all lines
   total <- lines %>%
     # Find lines matching the pattern
-    str_subset(pattern = block$patterns) %>%
+    stringr::str_subset(pattern = block$patterns) %>%
     # Extracts tokens from the lines matching the pattern
-    str_match(pattern = block$patterns)
+    stringr::str_match(pattern = block$patterns)
 
   # Drop last column, which contains the entire matched line
   total <- total[,-1]
@@ -430,7 +426,7 @@ parse_total_lines <- function(lines, block) {
   colnames(total) <- block$token_names
 
   # Convert to tibble
-  total <- as_tibble(total)
+  total <- dplyr::as_tibble(total)
 
   total <- block$augment(total)
 

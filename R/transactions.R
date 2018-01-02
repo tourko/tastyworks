@@ -1,3 +1,4 @@
+#' @export
 read_confirmations <- function(files) {
   files %>%
     # Read each confirmtaion.
@@ -76,11 +77,11 @@ read_confirmations <- function(files) {
     # Process assigned stocks
     process_assigned() %>%
     # Merge transaction from all transaction blocks into one tibble
-    bind_rows() %>%
+    dplyr::bind_rows() %>%
     # Arrange transactions in the same order as they appear in the confirmations
-    arrange(trade_date, transaction_id) %>%
+    dplyr::arrange(trade_date, transaction_id) %>%
     # No more need for "transaction_id"
-    select(-transaction_id)
+    dplyr::select(-transaction_id)
 }
 
 process_assigned <- function(transactions) {
@@ -91,26 +92,27 @@ process_assigned <- function(transactions) {
     # For each assigned stock create a "dummy" option transaction
     assigned_options <- transactions$option %>%
       filter(cusip %in% transactions$assigned$assigned_cusip) %>%
-      mutate(transaction_id  = assigned_stocks$transaction_id,
-             trade_date      = assigned_stocks$trade_date,
-             reason          = assigned_stocks$reason,
-             open_close      = factor("CLOSE", levels = c("OPEN", "CLOSE")),
-             buy_sell        = factor(if_else(buy_sell == "BUY", "SELL", "BUY"), levels = c("BUY", "SELL")),
-             quantity        = assigned_stocks$assigned_qty,
-             price           = 0,
-             commission      = 0,
-             transaction_fee = 0,
-             additional_fee  = 0,
-             net_amount      = 0,
-             tag_number      = assigned_stocks$tag_number)
+      dplyr::mutate(
+        transaction_id  = assigned_stocks$transaction_id,
+        trade_date      = assigned_stocks$trade_date,
+        reason          = assigned_stocks$reason,
+        open_close      = factor("CLOSE", levels = c("OPEN", "CLOSE")),
+        buy_sell        = factor(dplyr::if_else(buy_sell == "BUY", "SELL", "BUY"), levels = c("BUY", "SELL")),
+        quantity        = assigned_stocks$assigned_qty,
+        price           = 0,
+        commission      = 0,
+        transaction_fee = 0,
+        additional_fee  = 0,
+        net_amount      = 0,
+        tag_number      = assigned_stocks$tag_number)
 
     # Append assigned options to the option transaction block
     transactions$option <- transactions$option %>%
-      bind_rows(assigned_options)
+      dplyr::bind_rows(assigned_options)
 
     # Drop "assigned_qty" and "assigned_cusip" from assigned stock transactions
     transactions$assigned <- transactions$assigned %>%
-      select(-assigned_qty, -assigned_cusip)
+      dplyr::select(-assigned_qty, -assigned_cusip)
   }
 
   return(transactions)
