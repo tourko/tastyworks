@@ -3,7 +3,7 @@ context("Read Confirmations")
 # Location of the confirmations
 path <- file.path("confirmations")
 
-test_that("Read single confimation", {
+test_that("Read single confirmation", {
   confirmation_file <- list.files(path       = path.expand(path),
                                   pattern    = "2017-08-30-1NE23456-confirmation.pdf",
                                   full.names = TRUE)

@@ -125,10 +125,9 @@ process_assigned <- function(transactions) {
   # Check if there are any assigned transactions
   if ( !purrr::is_empty(transactions$assigned) ) {
     assigned_stocks <- transactions$assigned
-    options <- transactions$option
 
     # For each assigned stock create a "dummy" option transaction
-    assigned_options <- options %>%
+    assigned_options <- transactions$option %>%
       dplyr::filter_(~cusip %in% transactions$assigned$assigned_cusip) %>%
       dplyr::mutate_(
         transaction_id  = assigned_stocks$transaction_id,
