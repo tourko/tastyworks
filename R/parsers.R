@@ -402,7 +402,8 @@ parse_transaction_lines <- function(lines, block) {
     # so that they appear in the same order as in the confrimation.
     transactions <- transactions %>%
       dplyr::mutate(transaction_id = stringr::str_c("T", stringr::str_pad(first_transaction_lines, 5, pad = "0"))) %>%
-      dplyr::select(transaction_id, dplyr::everything())
+      # Use one_of() to suppress "no visible binding for global variable" note
+      dplyr::select(dplyr::one_of("transaction_id"), dplyr::everything())
   }
 
   return(transactions)
