@@ -1,3 +1,37 @@
+#' Extract transactions from Tastywork's confirmation file(s)
+#'
+#' This function reads Tastywork's confirmation files, which are in PDF format,
+#' extracts transactions from each file and merges them together in a singel data frame.
+#'
+#' \code{read_confirmations}
+#'
+#' @param files a vector of path names to the PDF files.
+#'
+#' @return The output is a data frame, where each record represents one transaction.
+#'
+#' @examples
+#' # Read a single confimation file at once
+#' transactions <- read_confirmations("confirmations/2017-08-30-1NE23456-confirmation.pdf")
+#'
+#'
+#' # Read several confirmation files
+#' files <- c("confirmations/2017-08-30-1NE23456-confirmation.pdf",
+#'            "confirmations/2017-08-30-1NE23456-confirmation.pdf")
+#' transactions <- read_confirmations(files)
+#'
+#'
+#' # Read all confimation files matching a template
+#' # A template for confirmation file name
+#' confirmation_pattern <- START %R% YMD %R% "-" %R%
+#'  repeated(ALNUM, 8) %R% "-confirmation" %R%
+#'  DOT %R% "pdf" %R% END
+#'
+#' # Get a list of confirmation files
+#' files <- list.files(path = path.expand("confirmations"),
+#'                    pattern = confirmation_pattern,
+#'                    full.names = TRUE)
+#' transactions <- read_confirmations(files)
+#'
 #' @export
 read_confirmations <- function(files) {
   files %>%
