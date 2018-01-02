@@ -5,7 +5,7 @@ Version: 0.1.0
 Author: Andrey Tourkó
 Maintainer: Andrey Tourkó <tourko@gmail.com>
 Description: This package extracts transactions from trade confirmations from Tastywork's and puts them in a single dataframe.
-License: <TBD>
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: pdftools, dplyr, purrr, stringr, rebus, lubridate, data.table
