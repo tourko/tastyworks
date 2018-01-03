@@ -15,7 +15,7 @@ as.action <- function(value) {
   factor(value, levels = c("BUY", "SELL", "REMOVE"))
 }
 
-as.open_close <- function(value) {
+as.position <- function(value) {
   value[value == "CLOSING"] <- "CLOSE"
   factor(value, levels = c("OPEN", "CLOSE"))
 }
@@ -115,7 +115,7 @@ transaction_blocks$option = list(
     "strike",           # (14) Strike
     "cusip",            # (15) Option CUSIP
     "reason",           # (16) UNSOLICITED
-    "open_close"        # (17) OPEN or CLOSE
+    "position"          # (17) OPEN or CLOSE
   ),
   augment = function(df) {
     df %>%
@@ -139,14 +139,14 @@ transaction_blocks$option = list(
         # Convert to factor
         reason          = as.reason(reason),
         # Convert to factor: "OPEN" -> "OPEN", "CLOSING" -> "CLOSE"
-        open_close      = as.open_close(open_close),
+        position        = as.position(position),
         # Add "instrument" column and set its value to "OPTION"
         instrument      = as.instrument("OPTION")) %>%
       # Change columns' order
       dplyr::select(
         trade_date,
         reason,
-        open_close,
+        position,
         action,
         symbol,
         instrument,
@@ -230,14 +230,14 @@ transaction_blocks$stock = list(
         # Convert to factor
         reason          = as.reason(reason),
         # If transaction_fee is 0, then it's opening trade, otherwise closing trade
-        open_close      = as.open_close((dplyr::if_else(transaction_fee == 0, "OPEN", "CLOSE"))),
+        position        = as.position((dplyr::if_else(transaction_fee == 0, "OPEN", "CLOSE"))),
         # Add "instrument" column and set its value to "STOCK"
         instrument      = as.instrument("STOCK")) %>%
       # Change columns' order
       dplyr::select(
         trade_date,
         reason,
-        open_close,
+        position,
         action,
         symbol,
         instrument,

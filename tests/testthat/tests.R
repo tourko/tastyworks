@@ -85,8 +85,8 @@ test_that("Confirmation with closed options", {
   xop <- transactions %>%
     filter(symbol == "XOP")
 
-  xop_open    <- xop %>% filter(reason == "UNSOLICITED", open_close == "OPEN")
-  xop_close   <- xop %>% filter(reason == "UNSOLICITED", open_close == "CLOSE")
+  xop_open    <- xop %>% filter(reason == "UNSOLICITED", position == "OPEN")
+  xop_close   <- xop %>% filter(reason == "UNSOLICITED", position == "CLOSE")
   xop_expired <- xop %>% filter(reason == "EXPIRED")
 
   # There are 2 XOP transactions
@@ -141,7 +141,7 @@ test_that("Confirmation with assigned stock", {
   # Check that values of the assigned options have correct values
   expect_true(assigned_option$trade_date == assigned_stock$trade_date)
   expect_true(assigned_option$action == "REMOVE")
-  expect_true(assigned_option$open_close == "CLOSE")
+  expect_true(assigned_option$position == "CLOSE")
   expect_true(assigned_option$quantity == assigned_stock$quantity/100L)
   expect_true(assigned_option$price == 0)
   expect_true(assigned_option$principal == 0)
