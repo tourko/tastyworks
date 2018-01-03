@@ -8,6 +8,6 @@ Description: This package extracts transactions from trade confirmations from Ta
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: pdftools, dplyr, purrr, stringr, rebus, lubridate, data.table
+Imports: pdftools, dplyr, purrr, tidyr, stringr, rebus, lubridate, data.table
 Suggests: testthat
 RoxygenNote: 6.0.1

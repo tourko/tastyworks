@@ -5,16 +5,53 @@ context("Read confirmations")
 # Location of the confirmations
 confirmations_folder <- file.path("confirmations")
 
-test_that("Read a single confirmation", {
+test_that("Read a single confirmation file", {
   confirmation_file <- file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf")
 
   transactions <- read_confirmations(confirmation_file)
 
-  # There are 5 transactions in the confirmation
-  expect_equal(nrow(transactions), 5)
+  # If there is a confirmation, there must be at least 1 transactions in it.
+  expect_gt(nrow(transactions), 0)
 })
 
-test_that("Mixed option and stock transactions", {
+test_that("Read several confirmation files", {
+  confirmation_file <- c(
+    file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf"),
+    file.path(confirmations_folder, "2017-08-31-1NE23456-confirmation.pdf"),
+    file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf"),
+    file.path(confirmations_folder, "2017-09-05-1NE23456-confirmation.pdf"),
+    file.path(confirmations_folder, "2017-09-06-1NE23456-confirmation.pdf")
+  )
+
+  transactions <- read_confirmations(confirmation_file)
+
+  # There must be at least 1 transactions in it
+  expect_gt(nrow(transactions), 0)
+})
+
+test_that("Confirmation with options only", {
+  confirmation_file <- file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf")
+
+  transactions <- read_confirmations(confirmation_file)
+
+  # Get unsolicited transactions
+  unsolicited <- transactions %>%
+    filter(reason == "UNSOLICITED")
+
+  # Get unsolicited transactions
+  expired <- transactions %>%
+    filter(reason == "EXPIRED")
+
+  # There are:
+  # • 5 unsolicited transactions
+  # • 5 dummy expired options
+  expect_equal(nrow(transactions), 10)
+
+  # Number of unsolicited and expired options should be the same
+  expect_true(nrow(unsolicited) == nrow(expired))
+})
+
+test_that("Confirmation with both option and stock transactions", {
   confirmation_file <- file.path(confirmations_folder, "2017-12-15-1NE23456-confirmation.pdf")
 
   transactions <- read_confirmations(confirmation_file)
@@ -37,22 +74,35 @@ test_that("Mixed option and stock transactions", {
   expect_equal(nrow(ung_stock), 1)
 })
 
-test_that("Read several confirmations", {
+test_that("Confirmation with closed options", {
   confirmation_file <- c(
     file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf"),
-    file.path(confirmations_folder, "2017-08-31-1NE23456-confirmation.pdf"),
-    file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf"),
-    file.path(confirmations_folder, "2017-09-05-1NE23456-confirmation.pdf"),
-    file.path(confirmations_folder, "2017-09-06-1NE23456-confirmation.pdf")
+    file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf")
   )
 
   transactions <- read_confirmations(confirmation_file)
 
-  # There are 36 transactions in the confirmations
-  expect_equal(nrow(transactions), 36)
+  xop <- transactions %>%
+    filter(symbol == "XOP")
+
+  xop_open    <- xop %>% filter(reason == "UNSOLICITED", open_close == "OPEN")
+  xop_close   <- xop %>% filter(reason == "UNSOLICITED", open_close == "CLOSE")
+  xop_expired <- xop %>% filter(reason == "EXPIRED")
+
+  # There are 2 XOP transactions
+  expect_equal(nrow(xop), 2)
+
+  # There is 1 opening transaction
+  expect_equal(nrow(xop_open), 1)
+
+  # There is 1 closing transaction
+  expect_equal(nrow(xop_close), 1)
+
+  # There should be none dummy expired options
+  expect_equal(nrow(xop_expired), 0)
 })
 
-test_that("Assigned stock", {
+test_that("Confirmation with assigned stock", {
   confirmation_file <- c(
     file.path(confirmations_folder, "2017-10-18-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-10-19-1NE23456-confirmation.pdf"),
@@ -74,18 +124,27 @@ test_that("Assigned stock", {
   assigned_option <- ual %>%
     filter(instrument == "OPTION", reason == "ASSIGNED")
 
-  # There are total 21 transactions in the confirmations + 1 dummy assigned option
-  expect_equal(nrow(transactions), 22)
-  # There are 8 UAL transactions
-  expect_equal(nrow(ual), 10)
+  # There are:
+  # • 21 unsolicited transactions
+  # • 5 dummy expired options
+  # • 1 dummy assigned option
+  expect_equal(nrow(transactions), 27)
+
+  # There are:
+  # • 8 unsolicited UAL transactions
+  # • 1 dummy expired options
+  expect_equal(nrow(ual), 11)
+
   # There is 1 assigned option
   expect_equal(nrow(assigned_option), 1)
+
   # Check that values of the assigned options have correct values
   expect_true(assigned_option$trade_date == assigned_stock$trade_date)
   expect_true(assigned_option$action == "REMOVE")
   expect_true(assigned_option$open_close == "CLOSE")
   expect_true(assigned_option$quantity == assigned_stock$quantity/100L)
   expect_true(assigned_option$price == 0)
+  expect_true(assigned_option$principal == 0)
   expect_true(assigned_option$commission == 0)
   expect_true(assigned_option$transaction_fee == 0)
   expect_true(assigned_option$additional_fee == 0)

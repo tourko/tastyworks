@@ -109,6 +109,8 @@ read_confirmations <- function(files) {
     purrr::map(~ .x %>% purrr::map_dfr(~ .x)) %>%
     # Process assigned stocks
     process_assigned() %>%
+    # Process expired options
+    process_expired() %>%
     # Merge transaction from all transaction blocks into one tibble
     dplyr::bind_rows() %>%
     # Arrange transactions in the same order as they appear in the confirmations
@@ -134,6 +136,7 @@ process_assigned <- function(transactions) {
         action          = as.action("REMOVE"),
         quantity        = assigned_stocks$assigned_qty,
         price           = 0,
+        principal       = 0,
         commission      = 0,
         transaction_fee = 0,
         additional_fee  = 0,
@@ -148,6 +151,61 @@ process_assigned <- function(transactions) {
     transactions$assigned <- transactions$assigned %>%
       # Use one_of() to suppress "no visible binding for global variable" note
       dplyr::select(-dplyr::one_of(c("assigned_qty", "assigned_cusip")))
+  }
+
+  return(transactions)
+}
+
+process_expired <- function(transactions) {
+  options <- transactions$option
+
+  # Convert to a data frame with the OPENING and CLOSING quantities for each CUSIP
+  #      cusip  OPEN CLOSE
+  # *   <chr>  <int> <int>
+  # 1 8BKQXT2     1     1
+  # 2 8BRRSQ6     1     1
+  # 3 8BRTKX9     1     1
+  # 4 8BRTNB5     0     1
+  # .     ...     .     .
+  open_gt_close <- options %>%
+    dplyr::select_(~cusip, ~open_close, ~quantity) %>%
+    dplyr::group_by_(~cusip, ~open_close) %>%
+    dplyr::summarise_at("quantity", sum) %>%
+    tidyr::spread(open_close, quantity, fill = 0) %>%
+    # Add OPEN and CLOSE columns if they don't exist
+    dplyr::mutate(OPEN  = if (exists("OPEN",  where = .)) as.integer(OPEN)  else 0L) %>%
+    dplyr::mutate(CLOSE = if (exists("CLOSE", where = .)) as.integer(CLOSE) else 0L) %>%
+    # Find CUSIPs that have greater OPEN quantity than CLOSE quantity
+    dplyr::filter(OPEN > CLOSE)
+
+  # Get options that expired and for which number of OPEN'ed contracts
+  # is greater than the number of CLOSE'ed contracts.
+  expired_options <- transactions$option %>%
+    dplyr::filter_(~cusip %in% open_gt_close$cusip, ~open_close == "OPEN", ~expiration_date < lubridate::today())
+
+  # Check if there are any expired options
+  if ( !purrr::is_empty(expired_options) ) {
+    # For each expired option create a "dummy" option transaction
+    expired_options_to_remove <- expired_options %>%
+      dplyr::mutate(
+        # Append "0" to the "transaction_id" for these "dummy" transactions to be listed after the normal transactions.
+        transaction_id  = stringr::str_c(expired_options$transaction_id, "0"),
+        trade_date      = expired_options$expiration_date,
+        reason          = as.reason("EXPIRED"),
+        open_close      = as.open_close("CLOSE"),
+        action          = as.action("REMOVE"),
+        quantity        = expired_options$quantity,
+        price           = 0,
+        principal       = 0,
+        commission      = 0,
+        transaction_fee = 0,
+        additional_fee  = 0,
+        net_amount      = 0,
+        tag_number      = expired_options$tag_number)
+
+    # Append expired options to the option transaction block
+    transactions$option <- transactions$option %>%
+      dplyr::bind_rows(expired_options_to_remove)
   }
 
   return(transactions)
