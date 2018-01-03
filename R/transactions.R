@@ -45,33 +45,22 @@ read_confirmations <- function(files) {
     # $ :List of 4
     # ..$ option   :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	5 obs. of  19 variables:
     # .....
-    # ..$ stock    :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
-    # ..$ assigned :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
-    # ..$ exercised:Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     # $ :List of 4
-    # ..$ option   :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	4 obs. of  19 variables:
-    # .....
-    # ..$ stock    :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
-    # ..$ assigned :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
-    # ..$ exercised:Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
+    # ..$ stock    :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	4 obs. of  16 variables:
     # .....
     purrr::map(process_confirmation) %>%
     # Turn the list "inside-out", so that it will look like the following:
     # List of 4:
     # $ option :List of 70
     #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
-    #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ......
     # $ stock :List of 70
-    #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ......
     # $ assigned :List of 70
     #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
-    #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ......
     # $ exercised :List of 70
-    #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ......
     purrr::transpose(.names = names(transaction_blocks)) %>%
@@ -188,7 +177,8 @@ process <- list(
       # For each expired option create a "dummy" option transaction
       expired_options_to_remove <- expired_options %>%
         dplyr::mutate(
-          # Append "0" to the "transaction_id" for these "dummy" transactions to be listed after the normal transactions.
+          # Append "0" to the "transaction_id", so that these "dummy" transactions
+          # will be listed after the normal transactions.
           transaction_id  = stringr::str_c(expired_options$transaction_id, "0"),
           trade_date      = expired_options$expiration_date,
           reason          = as.reason("EXPIRED"),
