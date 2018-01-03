@@ -40,8 +40,8 @@ process_confirmation <- function(f) {
     # Calculate totals for each transaction block
     purrr::map_dfr(~ .x %>%
                      dplyr::summarise_(
-                          quantity   = sum(.$quantity   * dplyr::if_else(.$buy_sell == "BUY", 1L, -1L)),
-                          net_amount = sum(.$net_amount * dplyr::if_else(.$buy_sell == "BUY", -1,   1))
+                          quantity   = sum(.$quantity   * dplyr::if_else(.$action == "BUY", 1L, -1L)),
+                          net_amount = sum(.$net_amount * dplyr::if_else(.$action == "BUY", -1,   1))
                         )
     ) %>%
     # Use *_at() functions to suppress "no visible binding for global variable" note.

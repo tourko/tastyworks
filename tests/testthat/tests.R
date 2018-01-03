@@ -66,6 +66,10 @@ test_that("Assigned stock", {
   ual <- transactions %>%
     filter(symbol == "UAL")
 
+  # Filter assigned stock
+  assigned_stock <- ual %>%
+    filter(instrument == "STOCK", reason == "ASSIGNED")
+
   # Filter "dummy" assigned option
   assigned_option <- ual %>%
     filter(instrument == "OPTION", reason == "ASSIGNED")
@@ -76,4 +80,15 @@ test_that("Assigned stock", {
   expect_equal(nrow(ual), 10)
   # There is 1 assigned option
   expect_equal(nrow(assigned_option), 1)
+  # Check that values of the assigned options have correct values
+  expect_true(assigned_option$trade_date == assigned_stock$trade_date)
+  expect_true(assigned_option$action == "REMOVE")
+  expect_true(assigned_option$open_close == "CLOSE")
+  expect_true(assigned_option$quantity == assigned_stock$quantity/100L)
+  expect_true(assigned_option$price == 0)
+  expect_true(assigned_option$commission == 0)
+  expect_true(assigned_option$transaction_fee == 0)
+  expect_true(assigned_option$additional_fee == 0)
+  expect_true(assigned_option$net_amount == 0)
+  expect_true(assigned_option$tag_number == assigned_stock$tag_number)
 })

@@ -1,4 +1,29 @@
 #
+# Define functions that convert values to factors
+#
+as.reason <- function(value) {
+  factor(value, levels = c("UNSOLICITED", "ASSIGNED", "EXERCISED"))
+}
+
+as.instrument <- function(value) {
+  factor(value, levels = c("STOCK", "OPTION"))
+}
+
+as.action <- function(value) {
+  value[value == "B"] <- "BUY"
+  value[value == "S"] <- "SELL"
+  factor(value, levels = c("BUY", "SELL", "REMOVE"))
+}
+
+as.open_close <- function(value) {
+  value[value == "CLOSING"] <- "CLOSE"
+  factor(value, levels = c("OPEN", "CLOSE"))
+}
+
+as.option_type <- function(value) {
+  factor(value, levels = c("CALL", "PUT"))
+}
+
 # Define commonly used patterns
 #
 pattern <- list(
@@ -74,7 +99,7 @@ transaction_blocks$option = list(
             SPC %R% "CONTRACT"
   ),
   token_names = c(
-    "buy_sell",         #  (1) BUY or SELL
+    "action",           #  (1) BUY or SELL
     "trade_date",       #  (2) Trade Date
     "quantity",         #  (3) Quantity
     "price",            #  (4) Price
@@ -97,7 +122,7 @@ transaction_blocks$option = list(
       # Convert string values in the columns to the appropriate data types
       dplyr::mutate(
         # Convert to factor: "B" -> "BUY", "S" -> "SELL"
-        buy_sell        = factor(buy_sell, levels = c("B", "S"), labels = c("BUY", "SELL")),
+        action          = as.action(action),
         trade_date      = lubridate::mdy(trade_date),
         quantity        = as.integer(quantity),
         price           = as.numeric(price),
@@ -108,21 +133,21 @@ transaction_blocks$option = list(
         additional_fee  = as.numeric(additional_fee),
         # Drop "," as thuosands separator and convert to numeric
         net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
-        option_type     = factor(option_type, levels = c("CALL", "PUT")),
+        option_type     = as.option_type(option_type),
         expiration_date = lubridate::mdy(expiration_date),
         strike          = as.numeric(strike),
         # Convert to factor
-        reason          = factor(reason, levels = c("UNSOLICITED", "ASSIGNED", "EXERCISED")),
+        reason          = as.reason(reason),
         # Convert to factor: "OPEN" -> "OPEN", "CLOSING" -> "CLOSE"
-        open_close      = factor(open_close, levels = c("OPEN", "CLOSING"), labels = c("OPEN", "CLOSE")),
+        open_close      = as.open_close(open_close),
         # Add "instrument" column and set its value to "OPTION"
-        instrument      = factor("OPTION", levels = c("STOCK", "OPTION"))) %>%
+        instrument      = as.instrument("OPTION")) %>%
       # Change columns' order
       dplyr::select(
         trade_date,
         reason,
         open_close,
-        buy_sell,
+        action,
         symbol,
         instrument,
         quantity,
@@ -172,7 +197,7 @@ transaction_blocks$stock = list(
             SPC %R% capture("UNSOLICITED")                   # (13) UNSOLICITED
   ),
   token_names = c(
-    "buy_sell",         #  (1) BUY or SELL
+    "action",           #  (1) BUY or SELL
     "trade_date",       #  (2) Trade Date
     "quantity",         #  (3) Quantity
     "symbol",           #  (4) Symbol of the stock
@@ -191,7 +216,7 @@ transaction_blocks$stock = list(
       # Convert string values in the columns to the appropriate data types
       dplyr::mutate(
         # Convert to factor: "B" -> "BUY", "S" -> "SELL"
-        buy_sell        = factor(buy_sell, levels = c("B", "S"), labels = c("BUY", "SELL")),
+        action          = as.action(action),
         trade_date      = lubridate::mdy(trade_date),
         quantity        = as.integer(quantity),
         price           = as.numeric(price),
@@ -203,18 +228,17 @@ transaction_blocks$stock = list(
         # Drop "," as thuosands separator and convert to numeric
         net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
         # Convert to factor
-        reason          = factor(reason, levels = c("UNSOLICITED", "ASSIGNED", "EXERCISED")),
+        reason          = as.reason(reason),
         # If transaction_fee is 0, then it's opening trade, otherwise closing trade
-        open_close      = factor(dplyr::if_else(transaction_fee == 0, "OPEN", "CLOSE"),
-                                 levels = c("OPEN", "CLOSE")),
+        open_close      = as.open_close((dplyr::if_else(transaction_fee == 0, "OPEN", "CLOSE"))),
         # Add "instrument" column and set its value to "STOCK"
-        instrument      = factor("STOCK", levels = c("STOCK", "OPTION"))) %>%
+        instrument      = as.instrument("STOCK")) %>%
       # Change columns' order
       dplyr::select(
         trade_date,
         reason,
         open_close,
-        buy_sell,
+        action,
         symbol,
         instrument,
         quantity,
@@ -247,7 +271,7 @@ transaction_blocks$assigned = list(
   ),
   # Token names for assigned stock
   token_names = c(
-    "buy_sell",         #  (1) BUY or SELL
+    "action",           #  (1) BUY or SELL
     "trade_date",       #  (2) Trade Date
     "quantity",         #  (3) Quantity
     "symbol",           #  (4) Symbol of the stock
