@@ -146,8 +146,8 @@ transaction_blocks$option = list(
       dplyr::select(
         trade_date,
         reason,
-        position,
         action,
+        position,
         symbol,
         instrument,
         quantity,
@@ -237,8 +237,8 @@ transaction_blocks$stock = list(
       dplyr::select(
         trade_date,
         reason,
-        position,
         action,
+        position,
         symbol,
         instrument,
         quantity,
