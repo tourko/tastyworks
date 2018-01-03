@@ -126,12 +126,12 @@ process_assigned <- function(transactions) {
     # For each assigned stock create a "dummy" option transaction
     assigned_options <- transactions$option %>%
       dplyr::filter_(~cusip %in% transactions$assigned$assigned_cusip) %>%
-      dplyr::mutate_(
+      dplyr::mutate(
         transaction_id  = assigned_stocks$transaction_id,
         trade_date      = assigned_stocks$trade_date,
         reason          = assigned_stocks$reason,
         open_close      = factor("CLOSE", levels = c("OPEN", "CLOSE")),
-        buy_sell        = factor(dplyr::if_else(~buy_sell == "BUY", "SELL", "BUY"), levels = c("BUY", "SELL")),
+        buy_sell        = factor(dplyr::if_else(buy_sell == "BUY", "SELL", "BUY"), levels = c("BUY", "SELL")),
         quantity        = assigned_stocks$assigned_qty,
         price           = 0,
         commission      = 0,

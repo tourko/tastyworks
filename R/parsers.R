@@ -269,7 +269,7 @@ transaction_blocks$assigned = list(
       # Apply the same augment function as to the stock
       transaction_blocks$stock$augment() %>%
       # Convert "assigned_qty" to integer
-      dplyr::mutate(assigned_qty = as.integer(df$assigned_qty))
+      dplyr::mutate(assigned_qty = as.integer(assigned_qty))
   }
 )
 
