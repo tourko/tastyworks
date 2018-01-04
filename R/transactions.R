@@ -109,6 +109,7 @@ read_confirmations <- function(files) {
     dplyr::select(-dplyr::one_of("transaction_id"))
 }
 
+# Put functions in the list to suppress "no visible binding for global variable" note
 process <- list(
   assigned = function(transactions) {
     # Check if there are any assigned transactions
@@ -146,18 +147,31 @@ process <- list(
   },
 
   expired = function(transactions) {
-    # Convert to a data frame with the OPENING and CLOSING quantities for each CUSIP
-    #      cusip  OPEN CLOSE
-    # *   <chr>  <int> <int>
-    # 1 8BKQXT2     1     1
-    # 2 8BRRSQ6     1     1
-    # 3 8BRTKX9     1     1
-    # 4 8BRTNB5     0     1
-    # .     ...     .     .
+    # Find CUSIPs that have greater OPEN quantity than CLOSE quantity
     open_gt_close <- transactions$option %>%
+      # Select "cusip", "position" and "quantity" columns
       dplyr::select(cusip, position, quantity) %>%
+      # Group by CUSIP and position (OPEN and CLOSE)
       dplyr::group_by(cusip, position) %>%
+      # Sum the quantities for each CUSIP and position
+      # A tibble: 10 x 3
+      # Groups:   cusip [?]
+      #     cusip position quantity
+      #     <chr>   <fctr>    <int>
+      # 1 8BWGYG3     OPEN        1
+      # 2 8BWGYG3    CLOSE        1
+      # 3 8BWGYJ1     OPEN        1
+      # 4 8BWGYJ1    CLOSE        1
+      # .     ...      ...        .
       dplyr::summarise(quantity = sum(quantity)) %>%
+      # Convert to a data frame with the OPEN and CLOSE vs. quantities for each CUSIP
+      #      cusip  OPEN CLOSE
+      # *   <chr>  <int> <int>
+      # 1 8BKQXT2     1     1
+      # 2 8BRRSQ6     1     1
+      # 3 8BRTKX9     1     1
+      # 4 8BRTNB5     0     1
+      # .     ...     .     .
       tidyr::spread(position, quantity, fill = 0) %>%
       # Add OPEN and/or CLOSE columns if they don't exist
       dplyr::mutate(OPEN  = if (exists("OPEN",  where = .)) as.integer(OPEN)  else 0L) %>%
