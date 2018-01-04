@@ -29,10 +29,30 @@ test_that("Read several confirmation files", {
   expect_gt(nrow(transactions), 0)
 })
 
-test_that("Confirmation with options only", {
+test_that("Confirmation with unsolicited options only", {
   confirmation_file <- file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf")
 
-  transactions <- read_confirmations(confirmation_file)
+  transactions <- read_confirmations(confirmation_file, add.expired = FALSE)
+
+  # Get unsolicited transactions
+  unsolicited <- transactions %>%
+    filter(reason == "UNSOLICITED")
+
+  # Get unsolicited transactions
+  expired <- transactions %>%
+    filter(reason == "EXPIRED")
+
+  # There are 5 unsolicited transactions
+  expect_equal(nrow(unsolicited), 5)
+
+  # ... and no expired options were added
+  expect_equal(nrow(expired), 0)
+})
+
+test_that("Confirmation with unsolicited and added expired options", {
+  confirmation_file <- file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf")
+
+  transactions <- read_confirmations(confirmation_file, add.expired = TRUE)
 
   # Get unsolicited transactions
   unsolicited <- transactions %>%
@@ -44,10 +64,10 @@ test_that("Confirmation with options only", {
 
   # There are:
   # • 5 unsolicited transactions
-  # • 5 dummy expired options
+  # • 5 added expired transaction
   expect_equal(nrow(transactions), 10)
 
-  # Number of unsolicited and expired options should be the same
+  # Number of unsolicited transactions should be equal to that of expired transaction
   expect_true(nrow(unsolicited) == nrow(expired))
 })
 
@@ -126,14 +146,11 @@ test_that("Confirmation with assigned stock", {
 
   # There are:
   # • 21 unsolicited transactions
-  # • 5 dummy expired options
   # • 1 dummy assigned option
-  expect_equal(nrow(transactions), 27)
+  expect_equal(nrow(transactions), 21 + 1)
 
-  # There are:
-  # • 8 unsolicited UAL transactions
-  # • 1 dummy expired options
-  expect_equal(nrow(ual), 11)
+  # There are 10 unsolicited UAL transactions
+  expect_equal(nrow(ual), 10)
 
   # There is 1 assigned option
   expect_equal(nrow(assigned_option), 1)

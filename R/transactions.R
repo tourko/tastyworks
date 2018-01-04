@@ -4,6 +4,7 @@
 #' extracts transactions from each file and merges them together in a single data frame.
 #'
 #' @param files a vector of path names to the files.
+#' @param add.expired logical that indicates whether bogus transactions for expired optiosn should be added.
 #' @return The output is a data frame, where each record represents one transaction.
 #'
 #' @examples
@@ -32,7 +33,7 @@
 #' }
 #'
 #' @export
-read_confirmations <- function(files) {
+read_confirmations <- function(files, add.expired = FALSE) {
   files %>%
     # Read each confirmtaion.
     # The result is a list (1) with as many elements as there are files.
@@ -98,8 +99,8 @@ read_confirmations <- function(files) {
     purrr::map(~ .x %>% purrr::map_dfr(~ .x)) %>%
     # Process assigned stocks
     process$assigned() %>%
-    # Process expired options
-    process$expired() %>%
+    # Process expired options, if add.expired == TRUE
+    purrr::when(add.expired ~ process$expired(.), ~ .) %>%
     # Merge transaction from all transaction blocks into one tibble
     dplyr::bind_rows() %>%
     # Arrange transactions in the same order as they appear in the confirmations
