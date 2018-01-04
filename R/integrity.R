@@ -1,5 +1,5 @@
 # Put functions in the list to suppress "no visible binding for global variable" note
-func <- list (
+integrity_func <- list (
   find_orphants = function(transactions) {
     # Find CUSIPs that have greater CLOSE quantity than OPEN quantity
     close_gt_open <- transactions %>%
@@ -57,5 +57,5 @@ func <- list (
 #'
 #' @export
 find_orphants <- function(transactions) {
-  func$find_orphants(transactions)
+  integrity_func$find_orphants(transactions)
 }

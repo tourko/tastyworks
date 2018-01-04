@@ -5,6 +5,7 @@
 #'
 #' @param files a vector of path names to the files.
 #' @param add.expired logical that indicates whether bogus transactions for expired optiosn should be added.
+#'
 #' @return The output is a data frame, where each record represents one transaction.
 #'
 #' @examples
