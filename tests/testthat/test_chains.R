@@ -15,8 +15,7 @@ test_that("Simple order chain", {
     read_confirmations() %>%
     filter(symbol == "XOP")
 
-  orders <- orders_factory$new(xop)
-  chains <- orders$data %>%
+  chains <- orders$create(xop) %>%
     orders$classify() %>%
     orders$summarise() %>%
     orders$chain()
