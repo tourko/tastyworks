@@ -11,11 +11,15 @@ test_that("Simple order chain", {
     file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf")
   )
 
-  chains <- confirmation_files %>%
+  xop <- confirmation_files %>%
     read_confirmations() %>%
-    filter(symbol == "XOP") %>%
-    assemble_orders() %>%
-    chain_orders()
+    filter(symbol == "XOP")
+
+  orders <- orders_factory$new(xop)
+  chains <- orders$data %>%
+    orders$classify() %>%
+    orders$summarise() %>%
+    orders$chain()
 
   # The confirmation has only opening transactions, so no orphats are expected.
   expect_equal(length(chains), 1)
