@@ -97,6 +97,7 @@ orders$classify <-  function(orders) {
     inner_join(orders, by = "order_id") %>%
     select(order_id, trade_date, order_type, everything())
 }
+
 orders$summarise <-  function(orders) {
   orders %>%
     # Add "credit_debit" variable
@@ -116,6 +117,7 @@ orders$summarise <-  function(orders) {
     ) %>%
     select(order_id:symbol, credit_debit:fees, everything())
 }
+
 orders$chain <-  function(orders) {
   # Create a contigency matrix that shows relations between orders and CUSIPs.
   # Rows contain "order_id", columns contain "cusip":
@@ -145,54 +147,54 @@ orders$chain <-  function(orders) {
     # [[2]]
     #          cusip
     # order_id 8BWGYG3 8BWGYH3 8BWGYJ1 9BWGYG5 9BWGYG6 9BWGYH8
-  #        2       1       0       1       1       0       1
-  #       40       0       1       1       0       1       1
-  #       57       1       0       0       1       0       0
-  #       88       0       1       0       0       1       0
-  #
-  # [[3]]
-  #          cusip
-  # order_id 8H54976 8H55643 9H55256 9H55257
-  #        3       1       1       1       1
-  #       43       0       0       1       1
-  #       66       0       1       0       0
-  #
-  # [[4]]
-  #          cusip
-  # order_id 9H82162
-  #        1       1
-  #        4       1
-  #
-  # ...
-  #
-  # Itterate through the rows of the contigency matrix.
-  # Use index for the rows, so that we can get a row as matrix rather than as a vector.
-  1:nrow(m) %>% purrr::map(function(i) {
-    # Get a row as a matrix
-    r <- m[              i,                , drop = FALSE]
+    #        2       1       0       1       1       0       1
+    #       40       0       1       1       0       1       1
+    #       57       1       0       0       1       0       0
+    #       88       0       1       0       0       1       0
+    #
+    # [[3]]
+    #          cusip
+    # order_id 8H54976 8H55643 9H55256 9H55257
+    #        3       1       1       1       1
+    #       43       0       0       1       1
+    #       66       0       1       0       0
+    #
+    # [[4]]
+    #          cusip
+    # order_id 9H82162
+    #        1       1
+    #        4       1
+    #
+    # ...
+    #
+    # Itterate through the rows of the contigency matrix.
+    # Use index for the rows, so that we can get a row as matrix rather than as a vector.
+    1:nrow(m) %>% purrr::map(function(i) {
+      # Get a row as a matrix
+      r <- m[              i,                , drop = FALSE]
 
-    # Initial number of rows
-    n = 1
-    repeat {
-      # Get columns (in the selected row(s)), which contain at least one non-0 value
-      r <- m[               , colSums(r) != 0, drop = FALSE]
-      # Get rows (in the selected column(s)), which contain at least one non-0 value
-      r <- m[rowSums(r) != 0,                , drop = FALSE]
-      # Get number of rows found
-      k = nrow(r)
-      # If number of rows increased compared to the previous itteration,
-      # then we found new relations.
-      if (k > n) {
-        # Update row count and repeat the loop again.
-        n = k
-      } else {
-        # No more rows found, hence we already found all related rows (i.e. orders).
-        break
+      # Initial number of rows
+      n = 1
+      repeat {
+        # Get columns (in the selected row(s)), which contain at least one non-0 value
+        r <- m[               , colSums(r) != 0, drop = FALSE]
+        # Get rows (in the selected column(s)), which contain at least one non-0 value
+        r <- m[rowSums(r) != 0,                , drop = FALSE]
+        # Get number of rows found
+        k = nrow(r)
+        # If number of rows increased compared to the previous itteration,
+        # then we found new relations.
+        if (k > n) {
+          # Update row count and repeat the loop again.
+          n = k
+        } else {
+          # No more rows found, hence we already found all related rows (i.e. orders).
+          break
+        }
       }
-    }
 
-    r <- r[rowSums(r) != 0, colSums(r) != 0, drop = FALSE]
-  }) %>%
+      r <- r[rowSums(r) != 0, colSums(r) != 0, drop = FALSE]
+    }) %>%
     # The list may contain duplicated matrixes. From the example above, the orders "R00001" and "R00004" are related,
     # So we'll get identical matrixes, for rows "R00001" and "R00004" in the contigency matrix.
     # Leave only unique matrixes in the list.
@@ -208,17 +210,17 @@ orders$chain <-  function(orders) {
     # [[2]]
     # # A tibble: 4 x 1
     #   order_id
-  #      <chr>
-  # 1        2
-  # 2       40
-  # 3       57
-  # 4       88
-  #
-  # ...
-  #
-  # "order_id" comes from the row names of the matrixes
-  #
-  purrr::map(~ dplyr::tibble(order_id = rownames(.x))) %>%
+    #      <chr>
+    # 1        2
+    # 2       40
+    # 3       57
+    # 4       88
+    #
+    # ...
+    #
+    # "order_id" comes from the row names of the matrixes
+    #
+    purrr::map(~ dplyr::tibble(order_id = rownames(.x))) %>%
     # Convert "order_id" to integer
     purrr::map(~ .x %>% dplyr::mutate(order_id = as.integer(order_id))) %>%
     # Put real orders in place of "order_id" by joining with "orders" data frame
