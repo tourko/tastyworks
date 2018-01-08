@@ -16,7 +16,7 @@ transactions$read <- function(files) {
     # $ :List of 4
     # ..$ stock    :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	4 obs. of  16 variables:
     # .....
-    purrr::map(process_confirmation) %>%
+    purrr::map(confirmation$process) %>%
     # Turn the list "inside-out", so that it will look like the following:
     # List of 4:
     # $ option :List of 70

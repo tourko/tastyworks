@@ -1,4 +1,6 @@
-process_page <- function(page) {
+confirmation <- new.env()
+
+confirmation$process_page <- function(page) {
   page %>%
     # Split a page into lines
     stringr::str_split(pattern = NEWLINE, simplify = TRUE) %>%
@@ -10,24 +12,27 @@ process_page <- function(page) {
     stringr::str_subset(pattern = negated_char_class(START %R% zero_or_more(SPC) %R% END))
 }
 
-process_document <- function(doc) {
-  lines <- doc %>%
+confirmation$process_document <- function(doc) {
+  #dplyr::glimpse(doc %>% `[`(-1))
+  doc %>%
     # Drop the first page
     `[`(-1) %>%
     # Process each page
-    purrr::map(~ .x %>% process_page()) %>%
+    purrr::map(~ .x %>% confirmation$process_page()) %>%
     # Merge lines from all pages into one vector
-    unlist()
+    purrr::flatten_chr()
 }
 
-process_confirmation <- function(f) {
-  message(paste("Proccessing file", f))
-
+confirmation$read <- function(file) {
   # Read the document
-  doc <- pdftools::pdf_text(f)
+  pdftools::pdf_text(file) %>% confirmation$process_document()
+}
+
+confirmation$process <- function(file) {
+  message(paste("Proccessing confirmation", file))
 
   # Extract lines from the document
-  lines <- process_document(doc)
+  lines <- confirmation$read(file)
 
   # Extract transactions from the lines
   transactions <- transaction_blocks %>%
@@ -70,3 +75,4 @@ process_confirmation <- function(f) {
   # Return the transactions
   return(transactions)
 }
+
