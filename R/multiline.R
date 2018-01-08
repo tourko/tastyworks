@@ -65,7 +65,7 @@ multiline$detect <- function(lines, patterns) {
   # If there are any such columns, ...
   if ( length(no_match) > 0 ) {
     # ... drop them from the matrix
-    m <- m[, -which(colSums(m == 0) > 0), drop = FALSE]
+    m <- m[, -no_match, drop = FALSE]
   }
 
   # End result:
@@ -75,4 +75,12 @@ multiline$detect <- function(lines, patterns) {
   # pattern_3   11   15
   # pattern_4   12   16
   return(m)
+}
+
+multiline$subset <- function(lines, patterns) {
+  # Get line numbers matching the patterns
+  m <- multiline$detect(lines, patterns)
+
+  # Get the actual lines
+  matrix(lines[m], nrow = nrow(m), ncol = ncol(m), dimnames = dimnames(m))
 }
