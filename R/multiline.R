@@ -100,7 +100,7 @@ multiline$match <- function(lines, patterns, names = NULL) {
                       # Extracts tokens from each line matching a pattern
                       stringr::str_match(pattern = .x) %>%
                       # The first column contains the entire matched line and we don't need it
-                      .[, -1] %>%
+                      .[, -1, drop = FALSE] %>%
                       # Convert matrix to a tibble
                       dplyr::as_tibble())
 
