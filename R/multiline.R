@@ -84,3 +84,34 @@ multiline$subset <- function(lines, patterns) {
   # Get the actual lines
   matrix(lines[m], nrow = nrow(m), ncol = ncol(m), dimnames = dimnames(m))
 }
+
+multiline$match <- function(lines, patterns, names = NULL) {
+  # Get the lines matching the patterns
+  m <- multiline$subset(lines, patterns)
+
+  # Extract tokens from the lines.
+  tokens <-
+    # Apply patterns to the detected lines and merge the resulting list
+    # into a data frame by binding the columns, so that each row has
+    # all the tokens from teh multiple patterns
+    purrr::imap_dfc(patterns,
+                      # Limit the matching to the lines that have already been detected by the pattern
+                    ~ m[.y, ] %>%
+                      # Extracts tokens from each line matching a pattern
+                      stringr::str_match(pattern = .x) %>%
+                      # The first column contains the entire matched line and we don't need it
+                      .[, -1] %>%
+                      # Convert matrix to a tibble
+                      dplyr::as_tibble())
+
+  if ( !purrr::is_empty(tokens) ) {
+    if ( is.null(names) ) {
+      # Rename the columns as v1, v2, ...
+      colnames(tokens) <- stringr::str_c("v", tokens %>% ncol() %>% seq_len())
+    } else {
+      colnames(tokens) <- names
+    }
+  }
+
+  return(tokens)
+}

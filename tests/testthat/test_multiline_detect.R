@@ -1,4 +1,4 @@
-context("Multiline pattern matching")
+context("Multiline pattern - detect()")
 
 test_that("0 lines and empty pattern", {
   lines <- c()

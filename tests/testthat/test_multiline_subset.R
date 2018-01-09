@@ -1,4 +1,4 @@
-context("Multiline pattern subset")
+context("Multiline pattern - subset()")
 
 test_that("2 lines and a non-matching 1-line pattern", {
   lines <- c(
