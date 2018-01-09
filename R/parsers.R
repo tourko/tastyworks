@@ -24,32 +24,34 @@ as.option_type <- function(value) {
   factor(value, levels = c("CALL", "PUT"))
 }
 
+#
 # Define commonly used patterns
 #
-pattern <- list(
+pattern <- new.env()
+
   # Number in accounting format: "3.00" "123.00" "1,234.00" "1,234,567.00" "-123.00"
-  accounting_number = optional("-") %R% zero_or_more( group( digit(1,3) %R% "," ) ) %R% digit(1,3) %R% DOT %R% digit(2),
+pattern$accounting_number <-  optional("-") %R% zero_or_more( group( digit(1,3) %R% "," ) ) %R% digit(1,3) %R% DOT %R% digit(2)
 
   # Price with 7 digits after the dot: "0.1300000" "10.3500000"
   # They are all less than 1000, so we can use simplified pattern.
-  price_number = digit(1,3) %R% DOT %R% digit(7),
+pattern$price_number <-  digit(1,3) %R% DOT %R% digit(7)
 
   # Commission and fee amount: "0.00" "1.00" "0.04" "0.10"
   # They are all less than 10, so we can use simplified pattern.
-  commission_number = DGT %R% DOT %R% digit(2),
+pattern$commission_number <-  DGT %R% DOT %R% digit(2)
 
   # Tag number - either a capital letter or a digit followed by 4 digits: "C0998" "B6388" "15056"
-  tag_number = or(UPPER,DGT) %R% digit(4),
+pattern$tag_number <- or(UPPER,DGT) %R% digit(4)
 
   # Option strike number: "28" "350" "62.50" "1020"
-  strike_number = digit(1,4) %R% optional( group( DOT %R% digit(2) ) ),
+pattern$strike_number <- digit(1,4) %R% optional( group( DOT %R% digit(2) ) )
 
   # Option CUSIP format - seven-character alphanumeric: "9H82162"
-  option_cusip_string = repeated(ALNUM, 7),
+pattern$option_cusip_string <-  repeated(ALNUM, 7)
 
   # Stock CUSIP format - nine-digit string: "369604103"
-  stock_cusip_string = repeated(DIGIT, 9)
-) # End of patterns deifnitions
+pattern$stock_cusip_string <- repeated(DIGIT, 9)
+
 
 
 transaction_blocks <- list()
@@ -324,27 +326,6 @@ transaction_blocks$exercised = list(
   augment = transaction_blocks$option$augment
 )
 
-total_block <- list(
-  patterns = c(
-      START %R% "TOTAL SHARES" %R%
-      SPC %R% or("BOUGHT","SOLD") %R% ":" %R%
-      SPC %R% capture(pattern$accounting_number) %R%    # (1) Number of shares bought/sold
-      SPC %R% "TOTAL DOLLARS" %R%
-      SPC %R% or("BOUGHT","SOLD") %R% ":" %R%   # (2) Dollar amount
-      SPC %R% capture(pattern$accounting_number)
-  ),
-  token_names = c(
-    "shares",  # (1) Number of shares bought/sold
-    "dollars"  # (2) Dollar amount
-  ),
-  augment = function(df) {
-    df %>%
-      # Convert number of shares to integer and dollars to nummeric
-      dplyr::mutate(quantity   = as.integer(shares),
-                    net_amount = as.numeric(stringr::str_replace_all(dollars, ",", "")))
-  }
-)
-
 #
 # Parse transaction lines
 #
@@ -433,27 +414,3 @@ parse_transaction_lines <- function(lines, block) {
   return(transactions)
 }
 
-#
-# Parse total lines
-#
-parse_total_lines <- function(lines, block) {
-  # Apply total_line pattern to all lines
-  total <- lines %>%
-    # Find lines matching the pattern
-    stringr::str_subset(pattern = block$patterns) %>%
-    # Extracts tokens from the lines matching the pattern
-    stringr::str_match(pattern = block$patterns)
-
-  # Drop last column, which contains the entire matched line
-  total <- total[,-1]
-
-  # Set columns' names
-  colnames(total) <- block$token_names
-
-  # Convert to tibble
-  total <- dplyr::as_tibble(total)
-
-  total <- block$augment(total)
-
-  return(total)
-}

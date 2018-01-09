@@ -28,18 +28,7 @@ confirmation$read <- function(file) {
   pdftools::pdf_text(file) %>% confirmation$process_document()
 }
 
-confirmation$process <- function(file) {
-  message(paste("Proccessing confirmation", file))
-
-  # Extract lines from the document
-  lines <- confirmation$read(file)
-
-  # Extract transactions from the lines
-  transactions <- transaction_blocks %>%
-    purrr::map(~ parse_transaction_lines(lines, .x)) %>%
-    # Remove empty elements from the list
-    purrr::compact()
-
+confirmation$validate <- function(transactions, totals) {
   # Calculate transactions total
   transactions_total <- transactions %>%
     # Calculate totals for each transaction block
@@ -55,18 +44,33 @@ confirmation$process <- function(file) {
     # Summing introduces a rounding error, so we have to round the result for the comparisson to work correctly.
     dplyr::mutate_at("net_amount", round, 2)
 
-  # Extract confrimation totals from the lines
-  total <- parse_total_lines(lines, total_block)
-
   # Calculate confirmation totals
-  confirmation_total <- total %>%
+  confirmation_total <- totals %>%
     # Use summarise_at() to suppress "no visible binding for global variable" note
-    dplyr::summarise_at(c("quantity", "net_amount"), sum) %>%
+    dplyr::summarise(quantity = sum(shares), net_amount = sum(dollars)) %>%
     # Summing introduces a rounding error, so we have to round the result for the comparisson to work correctly.
-    dplyr::mutate_at("net_amount", round, 2)
+    dplyr::mutate(net_amount = round(net_amount, 2))
 
   # Compare confirmation totals with the transactions' totals
-  if ( !identical(transactions_total, confirmation_total) ) {
+  identical(transactions_total, confirmation_total)
+}
+
+confirmation$process <- function(file) {
+  message(paste("Proccessing confirmation", file))
+
+  # Extract lines from the document
+  lines <- confirmation$read(file)
+
+  # Extract transactions from the lines
+  transactions <- transaction_blocks %>%
+    purrr::map(~ parse_transaction_lines(lines, .x)) %>%
+    # Remove empty elements from the list
+    purrr::compact()
+
+  # Extract confrimation totals from the lines
+  totals <- block$parse(lines, total_block)
+
+  if ( !confirmation$validate(transactions, totals) ) {
     print(lines)
     print(transactions)
     stop("Total of the transactions does not match total of the confirmation.")
