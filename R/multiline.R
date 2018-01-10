@@ -79,15 +79,17 @@ multiline$detect <- function(lines, patterns) {
 
 multiline$subset <- function(lines, patterns) {
   # Get line numbers matching the patterns
-  m <- multiline$detect(lines, patterns)
+  n <- multiline$detect(lines, patterns)
 
   # Get the actual lines
-  matrix(lines[m], nrow = nrow(m), ncol = ncol(m), dimnames = dimnames(m))
+  l <- matrix(lines[n], nrow = nrow(n), ncol = ncol(n), dimnames = dimnames(n))
+
+  list(lines = l, numbers = n)
 }
 
 multiline$match <- function(lines, patterns, names = NULL) {
   # Get the lines matching the patterns
-  m <- multiline$subset(lines, patterns)
+  s <- multiline$subset(lines, patterns)
 
   # Extract tokens from the lines.
   tokens <-
@@ -96,7 +98,7 @@ multiline$match <- function(lines, patterns, names = NULL) {
     # all the tokens from teh multiple patterns
     purrr::imap_dfc(patterns,
                       # Limit the matching to the lines that have already been detected by the pattern
-                    ~ m[.y, ] %>%
+                    ~ s$lines[.y, ] %>%
                       # Extracts tokens from each line matching a pattern
                       stringr::str_match(pattern = .x) %>%
                       # The first column contains the entire matched line and we don't need it
@@ -109,8 +111,15 @@ multiline$match <- function(lines, patterns, names = NULL) {
       # Rename the columns as v1, v2, ...
       colnames(tokens) <- stringr::str_c("v", tokens %>% ncol() %>% seq_len())
     } else {
+      # Set columns names, if they were provided
       colnames(tokens) <- names
     }
+
+    # Add "first_line" and "last_line" to indicate the line range
+    tokens <- tokens %>% dplyr::mutate(
+      first_line = s$numbers[1, ],
+      last_line  = s$numbers[nrow(s$numbers), ]
+    )
   }
 
   return(tokens)
