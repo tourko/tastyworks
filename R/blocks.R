@@ -32,9 +32,8 @@ pattern <- list(
 block <- new.env()
 
 block$probe <- function(lines, block) {
-  lines %>%
-    multiline$match(block$patterns, block$token_names) %>%
-    block$augment()
+  tokens <- lines %>% multiline$match(block$patterns, block$token_names)
+  if ( !purrr::is_empty(tokens) ) block$augment(tokens)
 }
 
 #
@@ -58,6 +57,8 @@ total_block$token_names <- c(
 
 total_block$augment <- function(tokens) {
   tokens %>%
+    # Drop first_line and last_line colums
+    dplyr::select(-first_line, -last_line) %>%
     # Convert number of shares to integer and dollars to nummeric
     dplyr::mutate(shares  = as.integer(shares),
                   dollars = as.numeric(stringr::str_replace_all(dollars, ",", "")))
@@ -83,6 +84,10 @@ transaction_block$patterns <- c(
 
 transaction_block$augment <- function(tokens) {
   tokens %>%
+    # Use first_line as transaction_id
+    dplyr::rename(transaction_id = first_line) %>%
+    # Drop last_line column
+    dplyr::select(-last_line) %>%
     # Convert string values in the columns to the appropriate data types
     dplyr::mutate(
       # Convert to factor
@@ -188,6 +193,7 @@ option_block$augment <- function(tokens) {
       instrument      = as.instrument("OPTION")) %>%
     # Change columns' order
     dplyr::select(
+      transaction_id,
       trade_date,
       reason,
       action,
@@ -276,6 +282,7 @@ stock_block$augment <- function(tokens) {
       instrument      = as.instrument("STOCK")) %>%
     # Change columns' order
     dplyr::select(
+      transaction_id,
       trade_date,
       reason,
       action,
@@ -385,3 +392,4 @@ exercised_block$augment <- parent.env(exercised_block)$augment
 exercised_block$probe <- function(lines) {
   parent.env(exercised_block)$probe(lines, exercised_block)
 }
+

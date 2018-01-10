@@ -31,7 +31,7 @@ transactions$read <- function(files) {
     # $ exercised :List of 70
     #  ..$ :Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	0 obs. of  0 variables
     #  ......
-    purrr::transpose(.names = names(transaction_blocks)) %>%
+    purrr::transpose() %>%
     # Bind the rows in each transaction block together:
     # $option
     # # A tibble: 406 x 19
@@ -144,9 +144,9 @@ transactions$process_expired <- function(blocks) {
     # For each expired option create a "dummy" option transaction
     expired_options_to_remove <- expired_options %>%
       dplyr::mutate(
-        # Append "0" to the "transaction_id", so that these "dummy" transactions
+        # Append "000" to the "transaction_id", so that these "dummy" transactions
         # will be listed after the normal transactions.
-        transaction_id  = stringr::str_c(expired_options$transaction_id, "0"),
+        transaction_id  = expired_options$transaction_id * 1000L,
         trade_date      = expired_options$expiration_date,
         reason          = as.reason("EXPIRED"),
         position        = as.position("CLOSE"),

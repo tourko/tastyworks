@@ -9,7 +9,8 @@ test_that("Sell To Open option", {
   )
 
   result   <- lines %>% option_block$probe()
-  expected <- tibble::tibble(trade_date      = lubridate::mdy("08/30/17"),
+  expected <- tibble::tibble(transaction_id  = 1L,
+                             trade_date      = lubridate::mdy("08/30/17"),
                              reason          = as.reason("UNSOLICITED"),
                              action          = as.action("SELL"),
                              position        = as.position("OPEN"),
@@ -28,6 +29,8 @@ test_that("Sell To Open option", {
                              cusip           = "9H82162",
                              tag_number      = "E8470")
 
+  #str(result)
+  #str(expected)
   expect_identical(result, expected)
 })
 
@@ -40,7 +43,8 @@ test_that("Buy To Open option", {
   )
 
   result   <- lines %>% option_block$probe()
-  expected <- tibble::tibble(trade_date      = lubridate::mdy("08/30/17"),
+  expected <- tibble::tibble(transaction_id  = 1L,
+                             trade_date      = lubridate::mdy("08/30/17"),
                              reason          = as.reason("UNSOLICITED"),
                              action          = as.action("BUY"),
                              position        = as.position("OPEN"),
@@ -71,7 +75,8 @@ test_that("Buy To Close option", {
   )
 
   result   <- lines %>% option_block$probe()
-  expected <- tibble::tibble(trade_date      = lubridate::mdy("09/01/17"),
+  expected <- tibble::tibble(transaction_id  = 1L,
+                             trade_date      = lubridate::mdy("09/01/17"),
                              reason          = as.reason("UNSOLICITED"),
                              action          = as.action("BUY"),
                              position        = as.position("CLOSE"),
@@ -102,7 +107,8 @@ test_that("Sell To Close option", {
   )
 
   result   <- lines %>% option_block$probe()
-  expected <- tibble::tibble(trade_date      = lubridate::mdy("10/18/17"),
+  expected <- tibble::tibble(transaction_id  = 1L,
+                             trade_date      = lubridate::mdy("10/18/17"),
                              reason          = as.reason("UNSOLICITED"),
                              action          = as.action("SELL"),
                              position        = as.position("CLOSE"),

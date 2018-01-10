@@ -9,7 +9,8 @@ test_that("Assigned long stock", {
   )
 
   result   <- lines %>% assigned_block$probe()
-  expected <- tibble::tibble(trade_date      = lubridate::mdy("11/09/17"),
+  expected <- tibble::tibble(transaction_id  = 1L,
+                             trade_date      = lubridate::mdy("11/09/17"),
                              reason          = as.reason("ASSIGNED"),
                              action          = as.action("BUY"),
                              position        = as.position("OPEN"),

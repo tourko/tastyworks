@@ -9,7 +9,8 @@ test_that("Excercised Call option", {
   )
 
   result   <- lines %>% exercised_block$probe()
-  expected <- tibble::tibble(trade_date      = lubridate::mdy("11/15/17"),
+  expected <- tibble::tibble(transaction_id  = 1L,
+                             trade_date      = lubridate::mdy("11/15/17"),
                              reason          = as.reason("EXERCISED"),
                              action          = as.action("SELL"),
                              position        = as.position("CLOSE"),

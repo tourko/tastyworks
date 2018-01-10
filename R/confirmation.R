@@ -31,6 +31,8 @@ confirmation$read <- function(file) {
 confirmation$validate <- function(transactions, totals) {
   # Calculate transactions total
   transactions_total <- transactions %>%
+    # Remove empty elements from the list
+    purrr::compact() %>%
     # Calculate totals for each transaction block
     purrr::map_dfr(~ .x %>%
                      dplyr::summarise_(
@@ -38,11 +40,10 @@ confirmation$validate <- function(transactions, totals) {
                        net_amount = sum(.$net_amount * dplyr::if_else(.$action == "BUY", -1,   1))
                      )
     ) %>%
-    # Use *_at() functions to suppress "no visible binding for global variable" note.
     # Calculate totals for all blocks
-    dplyr::summarise_at(c("quantity", "net_amount"), sum) %>%
+    dplyr::summarise(quantity = sum(quantity), net_amount = sum(net_amount)) %>%
     # Summing introduces a rounding error, so we have to round the result for the comparisson to work correctly.
-    dplyr::mutate_at("net_amount", round, 2)
+    dplyr::mutate(net_amount = round(net_amount, 2))
 
   # Calculate confirmation totals
   confirmation_total <- totals %>%
@@ -61,11 +62,12 @@ confirmation$process <- function(file) {
   # Extract lines from the document
   lines <- confirmation$read(file)
 
-  # Extract transactions from the lines
-  transactions <- transaction_blocks %>%
-    purrr::map(~ parse_transaction_lines(lines, .x)) %>%
-    # Remove empty elements from the list
-    purrr::compact()
+  transactions <- list(
+    option    = option_block,
+    stock     = stock_block,
+    assigned  = assigned_block,
+    exercised = exercised_block
+  ) %>% purrr::map(~ lines %>% .x$probe())
 
   # Extract confrimation totals from the lines
   totals <- total_block$probe(lines)
@@ -79,4 +81,3 @@ confirmation$process <- function(file) {
   # Return the transactions
   return(transactions)
 }
-
