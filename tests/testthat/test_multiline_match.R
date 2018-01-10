@@ -60,3 +60,22 @@ test_that("5 lines and a non-matching 1-line pattern", {
 
   expect_identical(result, expected)
 })
+
+test_that("2 lines and a matching 2-line pattern", {
+  lines <- c(
+    "test line #1",
+    "test line #2"
+  )
+
+  patterns <- c(
+    pattern_1 = START %R% one_or_more(WRD %R% SPC) %R% capture("#1") %R% END,
+    pattern_2 = START %R% one_or_more(WRD %R% SPC) %R% capture("#2") %R% END
+  )
+
+  result   <- multiline$match(lines, patterns)
+  expected <- tibble(v1 = c("#1"), v2 = c("#2"),
+                     first_line = c(1L),
+                     last_line  = c(2L))
+
+  expect_identical(result, expected)
+})

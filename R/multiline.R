@@ -115,6 +115,8 @@ multiline$match <- function(lines, patterns, names = NULL) {
       colnames(tokens) <- names
     }
 
+    # Remove row names from the line number to avoid attributes being added to the tibble
+    rownames(s$numbers) <- NULL
     # Add "first_line" and "last_line" to indicate the line range
     tokens <- tokens %>% dplyr::mutate(
       first_line = s$numbers[1, ],
