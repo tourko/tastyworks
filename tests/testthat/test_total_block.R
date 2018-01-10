@@ -6,8 +6,9 @@ test_that("Parse", {
     "TOTAL SHARES SOLD: 0.00 TOTAL DOLLARS SOLD: 0.00"
   )
 
-  result   <- lines %>% block$parse(total_block)
-  expected <- tibble(shares = c(100L, 0L), dollars = c(-6505.00, 0.00))
+  result   <- lines %>% total_block$probe()
+  expected <- tibble::tibble(shares = c(100L, 0L),
+                             dollars = c(-6505.00, 0.00))
 
   expect_identical(result, expected)
 })

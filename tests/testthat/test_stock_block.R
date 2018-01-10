@@ -8,22 +8,22 @@ test_that("Buy To Open stock", {
     "Trailer: UNSOLICITED, PRODUCT DESCRIPTION UNDER SEPARATE COVER"
   )
 
-  result   <- lines %>% block$parse(stock_block)
-  expected <- tibble(trade_date      = lubridate::mdy("12/15/17"),
-                     reason          = as.reason("UNSOLICITED"),
-                     action          = as.action("BUY"),
-                     position        = as.position("OPEN"),
-                     symbol          = "UNG",
-                     instrument      = as.instrument("STOCK"),
-                     quantity        = 100L,
-                     price           = 5.31,
-                     principal       = 531.00,
-                     commission      = 5.00,
-                     transaction_fee = 0.00,
-                     additional_fee  = 0.08,
-                     net_amount      = 536.08,
-                     cusip           = "912318201",
-                     tag_number      = "I2680")
+  result   <- lines %>% stock_block$probe()
+  expected <- tibble::tibble(trade_date      = lubridate::mdy("12/15/17"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("BUY"),
+                             position        = as.position("OPEN"),
+                             symbol          = "UNG",
+                             instrument      = as.instrument("STOCK"),
+                             quantity        = 100L,
+                             price           = 5.31,
+                             principal       = 531.00,
+                             commission      = 5.00,
+                             transaction_fee = 0.00,
+                             additional_fee  = 0.08,
+                             net_amount      = 536.08,
+                             cusip           = "912318201",
+                             tag_number      = "I2680")
 
   expect_identical(result, expected)
 })
@@ -36,22 +36,22 @@ test_that("Sell To Close stock", {
     "Trailer: UNSOLICITED"
   )
 
-  result   <- lines %>% block$parse(stock_block)
-  expected <- tibble(trade_date      = lubridate::mdy("12/08/17"),
-                     reason          = as.reason("UNSOLICITED"),
-                     action          = as.action("SELL"),
-                     position        = as.position("CLOSE"),
-                     symbol          = "UAL",
-                     instrument      = as.instrument("STOCK"),
-                     quantity        = 100L,
-                     price           = 64.3801,
-                     principal       = 6438.01,
-                     commission      = 0.00,
-                     transaction_fee = 0.16,
-                     additional_fee  = 0.08,
-                     net_amount      = 6437.77,
-                     cusip           = "910047109",
-                     tag_number      = "T2198")
+  result   <- lines %>% stock_block$probe()
+  expected <- tibble::tibble(trade_date      = lubridate::mdy("12/08/17"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("SELL"),
+                             position        = as.position("CLOSE"),
+                             symbol          = "UAL",
+                             instrument      = as.instrument("STOCK"),
+                             quantity        = 100L,
+                             price           = 64.3801,
+                             principal       = 6438.01,
+                             commission      = 0.00,
+                             transaction_fee = 0.16,
+                             additional_fee  = 0.08,
+                             net_amount      = 6437.77,
+                             cusip           = "910047109",
+                             tag_number      = "T2198")
 
   expect_identical(result, expected)
 })

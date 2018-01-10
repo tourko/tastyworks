@@ -68,7 +68,7 @@ confirmation$process <- function(file) {
     purrr::compact()
 
   # Extract confrimation totals from the lines
-  totals <- block$parse(lines, total_block)
+  totals <- total_block$probe(lines)
 
   if ( !confirmation$validate(transactions, totals) ) {
     print(lines)

@@ -31,7 +31,7 @@ pattern <- list(
 #
 block <- new.env()
 
-block$parse <- function(lines, block) {
+block$probe <- function(lines, block) {
   lines %>%
     multiline$match(block$patterns, block$token_names) %>%
     block$augment()
@@ -63,11 +63,54 @@ total_block$augment <- function(tokens) {
                   dollars = as.numeric(stringr::str_replace_all(dollars, ",", "")))
 }
 
+total_block$probe <- function(lines) {
+  parent.env(total_block)$probe(lines, total_block)
+}
+
+
+#
+# Generic transaction block
+#
+transaction_block <- new.env(parent = block)
+
+transaction_block$patterns <- c(
+  # Line 3 is the same for all transaction types.
+  # "Currency: USD    ReportedPX:     MarkUp/Down:"
+  line3 = START %R% "Currency: USD" %R%
+    SPC %R% "ReportedPX:" %R%
+    SPC %R% "MarkUp/Down:"
+)
+
+transaction_block$augment <- function(tokens) {
+  tokens %>%
+    # Convert string values in the columns to the appropriate data types
+    dplyr::mutate(
+      # Convert to factor
+      action          = as.action(action),
+      trade_date      = lubridate::mdy(trade_date),
+      quantity        = as.integer(quantity),
+      price           = as.numeric(price),
+      # Drop "," as thuosands separator and convert to numeric
+      principal       = as.numeric(stringr::str_replace_all(principal, ",", "")),
+      commission      = as.numeric(commission),
+      transaction_fee = as.numeric(transaction_fee),
+      additional_fee  = as.numeric(additional_fee),
+      # Drop "," as thuosands separator and convert to numeric
+      net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
+      # Convert to factor
+      reason          = as.reason(reason)
+    )
+}
+
+transaction_block$probe <- function(lines, block) {
+  parent.env(transaction_block)$probe(lines, block)
+}
+
 
 #
 # Option block
 #
-option_block <- new.env(parent = block)
+option_block <- new.env(parent = transaction_block)
 
 option_block$patterns <- c(
   # Examples of line 1 for options:
@@ -100,10 +143,7 @@ option_block$patterns <- c(
           SPC %R% capture(pattern$option_cusip_string),    # (15) Option CUSIP
 
   # Line 3 is the same for all transaction types.
-  # "Currency: USD    ReportedPX:     MarkUp/Down:"
-  line3 = START %R% "Currency: USD" %R%
-          SPC %R% "ReportedPX:" %R%
-          SPC %R% "MarkUp/Down:",
+  parent.env(option_block)$patterns["line3"],
 
   # Examples of line 4 for options:
   # "Trailer:    UNSOLICITED, OPEN CONTRACT"
@@ -136,25 +176,12 @@ option_block$token_names <- c(
 
 option_block$augment <- function(tokens) {
   tokens %>%
+    parent.env(option_block)$augment() %>%
     # Convert string values in the columns to the appropriate data types
     dplyr::mutate(
-      # Convert to factor
-      action          = as.action(action),
-      trade_date      = lubridate::mdy(trade_date),
-      quantity        = as.integer(quantity),
-      price           = as.numeric(price),
-      # Drop "," as thuosands separator and convert to numeric
-      principal       = as.numeric(stringr::str_replace_all(principal, ",", "")),
-      commission      = as.numeric(commission),
-      transaction_fee = as.numeric(transaction_fee),
-      additional_fee  = as.numeric(additional_fee),
-      # Drop "," as thuosands separator and convert to numeric
-      net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
       option_type     = as.option_type(option_type),
       expiration_date = lubridate::mdy(expiration_date),
       strike          = as.numeric(strike),
-      # Convert to factor
-      reason          = as.reason(reason),
       # Convert to factor: "OPEN" -> "OPEN", "CLOSING" -> "CLOSE"
       position        = as.position(position),
       # Add "instrument" column and set its value to "OPTION"
@@ -177,11 +204,15 @@ option_block$augment <- function(tokens) {
       tag_number)
 }
 
+option_block$probe <- function(lines) {
+  parent.env(option_block)$probe(lines, option_block)
+}
+
 
 #
 # Stock block
 #
-stock_block <- new.env(parent = block)
+stock_block <- new.env(parent = transaction_block)
 
 stock_block$patterns <- c(
     # Exampples of line 1 for stock:
@@ -210,10 +241,7 @@ stock_block$patterns <- c(
             SPC %R% capture(pattern$stock_cusip_string),     # (12) Stock CUSIP
 
     # Line 3 is the same for all transaction types.
-    # "Currency: USD    ReportedPX:     MarkUp/Down:"
-    line3 = START %R% "Currency: USD" %R%
-            SPC %R% "ReportedPX:" %R%
-            SPC %R% "MarkUp/Down:",
+    parent.env(stock_block)$patterns["line3"],
 
     # Example of line 4 for stock:
     # "Trailer: UNSOLICITED"
@@ -239,22 +267,9 @@ stock_block$token_names <- c(
 
 stock_block$augment <- function(tokens) {
   tokens %>%
+    parent.env(stock_block)$augment() %>%
     # Convert string values in the columns to the appropriate data types
     dplyr::mutate(
-      # Convert to factor
-      action          = as.action(action),
-      trade_date      = lubridate::mdy(trade_date),
-      quantity        = as.integer(quantity),
-      price           = as.numeric(price),
-      # Drop "," as thuosands separator and convert to numeric
-      principal       = as.numeric(stringr::str_replace_all(principal, ",", "")),
-      commission      = as.numeric(commission),
-      transaction_fee = as.numeric(transaction_fee),
-      additional_fee  = as.numeric(additional_fee),
-      # Drop "," as thuosands separator and convert to numeric
-      net_amount      = as.numeric(stringr::str_replace_all(net_amount, ",", "")),
-      # Convert to factor
-      reason          = as.reason(reason),
       # If transaction_fee is 0, then it's opening trade, otherwise closing trade
       position        = as.position((dplyr::if_else(transaction_fee == 0, "OPEN", "CLOSE"))),
       # Add "instrument" column and set its value to "STOCK"
@@ -271,5 +286,65 @@ stock_block$augment <- function(tokens) {
       price:additional_fee,
       net_amount,
       cusip,
-      tag_number)
+      tag_number,
+      dplyr::everything())
+}
+
+stock_block$probe <- function(lines, block = stock_block) {
+  parent.env(stock_block)$probe(lines, block)
+}
+
+
+#
+# Assigned stock block
+#
+assigned_block <- new.env(parent = stock_block)
+
+assigned_block$patterns <- c(
+  # Line 1 for assigned stock is the same as the line for stocks
+  parent.env(assigned_block)$patterns["line1"],
+
+  # Line 2 for assigned stock is the same as the line for stocks
+  parent.env(assigned_block)$patterns["line2"],
+
+  # Line 3 is the same for all transaction types
+  parent.env(assigned_block)$patterns["line3"],
+
+  # Example of line 4 for assigned stock:
+  # Trailer:    A/E 9GMSJJ4 1 ASSIGNED
+  line4 = START %R% "Trailer:" %R%
+    SPC %R% "A/E" %R%
+    SPC %R% capture(pattern$option_cusip_string) %R% # (13) CUSIP of the assigned option
+    SPC %R% capture(one_or_more(DGT)) %R%            # (14) Assigned quantity
+    SPC %R% capture("ASSIGNED")                      # (15) ASSIGNED
+)
+
+assigned_block$token_names <- c(
+  "action",           #  (1) BUY or SELL
+  "trade_date",       #  (2) Trade Date
+  "quantity",         #  (3) Quantity
+  "symbol",           #  (4) Symbol of the stock
+  "price",            #  (5) Price
+  "principal",        #  (6) Principal
+  "commission",       #  (7) Commission
+  "transaction_fee",  #  (8) Transaction fee
+  "additional_fee",   #  (9) Additional fee
+  "tag_number",       # (10) Tag number
+  "net_amount",       # (11) Net ammount
+  "cusip",            # (12) Stock CUSIP
+  "assigned_cusip",   # (13) CUSIP of the assigned option
+  "assigned_qty",     # (14) Assigned quantity
+  "reason"            # (15) ASSIGNED
+)
+
+assigned_block$augment <- function(tokens) {
+  tokens %>%
+    # Apply the same augment function as to the stock
+    parent.env(assigned_block)$augment() %>%
+    # Convert "assigned_qty" to integer
+    dplyr::mutate(assigned_qty = as.integer(assigned_qty))
+}
+
+assigned_block$probe <- function(lines) {
+  parent.env(assigned_block)$probe(lines, assigned_block)
 }

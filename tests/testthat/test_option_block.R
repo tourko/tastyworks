@@ -8,25 +8,25 @@ test_that("Sell To Open option", {
     "Trailer: UNSOLICITED, OPEN CONTRACT"
   )
 
-  result   <- lines %>% block$parse(option_block)
-  expected <- tibble(trade_date      = lubridate::mdy("08/30/17"),
-                     reason          = as.reason("UNSOLICITED"),
-                     action          = as.action("SELL"),
-                     position        = as.position("OPEN"),
-                     symbol          = "XOP",
-                     instrument      = as.instrument("OPTION"),
-                     quantity        = 1L,
-                     option_type     = as.option_type("PUT"),
-                     strike          = 28,
-                     expiration_date = lubridate::mdy("10/20/17"),
-                     price           = 0.75,
-                     principal       = 75.00,
-                     commission      = 1.00,
-                     transaction_fee = 0.06,
-                     additional_fee  = 0.10,
-                     net_amount      = 73.84,
-                     cusip           = "9H82162",
-                     tag_number      = "E8470")
+  result   <- lines %>% option_block$probe()
+  expected <- tibble::tibble(trade_date      = lubridate::mdy("08/30/17"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("SELL"),
+                             position        = as.position("OPEN"),
+                             symbol          = "XOP",
+                             instrument      = as.instrument("OPTION"),
+                             quantity        = 1L,
+                             option_type     = as.option_type("PUT"),
+                             strike          = 28,
+                             expiration_date = lubridate::mdy("10/20/17"),
+                             price           = 0.75,
+                             principal       = 75.00,
+                             commission      = 1.00,
+                             transaction_fee = 0.06,
+                             additional_fee  = 0.10,
+                             net_amount      = 73.84,
+                             cusip           = "9H82162",
+                             tag_number      = "E8470")
 
   expect_identical(result, expected)
 })
@@ -39,25 +39,25 @@ test_that("Buy To Open option", {
     "Trailer: UNSOLICITED, OPEN CONTRACT"
   )
 
-  result   <- lines %>% block$parse(option_block)
-  expected <- tibble(trade_date      = lubridate::mdy("08/30/17"),
-                     reason          = as.reason("UNSOLICITED"),
-                     action          = as.action("BUY"),
-                     position        = as.position("OPEN"),
-                     symbol          = "FB",
-                     instrument      = as.instrument("OPTION"),
-                     quantity        = 1L,
-                     option_type     = as.option_type("PUT"),
-                     strike          = 155,
-                     expiration_date = lubridate::mdy("10/20/17"),
-                     price           = 1.19,
-                     principal       = 119.00,
-                     commission      = 1.00,
-                     transaction_fee = 0.04,
-                     additional_fee  = 0.10,
-                     net_amount      = 120.14,
-                     cusip           = "8BWGYG3",
-                     tag_number      = "Q9060")
+  result   <- lines %>% option_block$probe()
+  expected <- tibble::tibble(trade_date      = lubridate::mdy("08/30/17"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("BUY"),
+                             position        = as.position("OPEN"),
+                             symbol          = "FB",
+                             instrument      = as.instrument("OPTION"),
+                             quantity        = 1L,
+                             option_type     = as.option_type("PUT"),
+                             strike          = 155,
+                             expiration_date = lubridate::mdy("10/20/17"),
+                             price           = 1.19,
+                             principal       = 119.00,
+                             commission      = 1.00,
+                             transaction_fee = 0.04,
+                             additional_fee  = 0.10,
+                             net_amount      = 120.14,
+                             cusip           = "8BWGYG3",
+                             tag_number      = "Q9060")
 
   expect_identical(result, expected)
 })
@@ -70,25 +70,25 @@ test_that("Buy To Close option", {
     "Trailer: UNSOLICITED, CLOSING CONTRACT"
   )
 
-  result   <- lines %>% block$parse(option_block)
-  expected <- tibble(trade_date      = lubridate::mdy("09/01/17"),
-                     reason          = as.reason("UNSOLICITED"),
-                     action          = as.action("BUY"),
-                     position        = as.position("CLOSE"),
-                     symbol          = "XOP",
-                     instrument      = as.instrument("OPTION"),
-                     quantity        = 1L,
-                     option_type     = as.option_type("PUT"),
-                     strike          = 28,
-                     expiration_date = lubridate::mdy("10/20/17"),
-                     price           = 0.39,
-                     principal       = 39.00,
-                     commission      = 0.00,
-                     transaction_fee = 0.04,
-                     additional_fee  = 0.10,
-                     net_amount      = 39.14,
-                     cusip           = "9H82162",
-                     tag_number      = "Y8611")
+  result   <- lines %>% option_block$probe()
+  expected <- tibble::tibble(trade_date      = lubridate::mdy("09/01/17"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("BUY"),
+                             position        = as.position("CLOSE"),
+                             symbol          = "XOP",
+                             instrument      = as.instrument("OPTION"),
+                             quantity        = 1L,
+                             option_type     = as.option_type("PUT"),
+                             strike          = 28,
+                             expiration_date = lubridate::mdy("10/20/17"),
+                             price           = 0.39,
+                             principal       = 39.00,
+                             commission      = 0.00,
+                             transaction_fee = 0.04,
+                             additional_fee  = 0.10,
+                             net_amount      = 39.14,
+                             cusip           = "9H82162",
+                             tag_number      = "Y8611")
 
   expect_identical(result, expected)
 })
@@ -101,25 +101,25 @@ test_that("Sell To Close option", {
     "Trailer: UNSOLICITED, CLOSING CONTRACT"
   )
 
-  result   <- lines %>% block$parse(option_block)
-  expected <- tibble(trade_date      = lubridate::mdy("10/18/17"),
-                     reason          = as.reason("UNSOLICITED"),
-                     action          = as.action("SELL"),
-                     position        = as.position("CLOSE"),
-                     symbol          = "CMG",
-                     instrument      = as.instrument("OPTION"),
-                     quantity        = 1L,
-                     option_type     = as.option_type("CALL"),
-                     strike          = 325,
-                     expiration_date = lubridate::mdy("10/20/17"),
-                     price           = 2.00,
-                     principal       = 200.00,
-                     commission      = 0.00,
-                     transaction_fee = 0.06,
-                     additional_fee  = 0.10,
-                     net_amount      = 199.84,
-                     cusip           = "8GGNQB5",
-                     tag_number      = "C3380")
+  result   <- lines %>% option_block$probe()
+  expected <- tibble::tibble(trade_date      = lubridate::mdy("10/18/17"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("SELL"),
+                             position        = as.position("CLOSE"),
+                             symbol          = "CMG",
+                             instrument      = as.instrument("OPTION"),
+                             quantity        = 1L,
+                             option_type     = as.option_type("CALL"),
+                             strike          = 325,
+                             expiration_date = lubridate::mdy("10/20/17"),
+                             price           = 2.00,
+                             principal       = 200.00,
+                             commission      = 0.00,
+                             transaction_fee = 0.06,
+                             additional_fee  = 0.10,
+                             net_amount      = 199.84,
+                             cusip           = "8GGNQB5",
+                             tag_number      = "C3380")
 
   expect_identical(result, expected)
 })
