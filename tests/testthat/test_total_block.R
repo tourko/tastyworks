@@ -7,7 +7,7 @@ test_that("Parse", {
   )
 
   result   <- lines %>% total_block$probe()
-  expected <- tibble::tibble(shares = c(100L, 0L),
+  expected <- tibble::tibble(shares  = c(100L, 0L),
                              dollars = c(-6505.00, 0.00))
 
   expect_identical(result, expected)

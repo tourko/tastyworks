@@ -204,8 +204,8 @@ option_block$augment <- function(tokens) {
       tag_number)
 }
 
-option_block$probe <- function(lines) {
-  parent.env(option_block)$probe(lines, option_block)
+option_block$probe <- function(lines, block = option_block) {
+  parent.env(option_block)$probe(lines, block)
 }
 
 
@@ -313,10 +313,10 @@ assigned_block$patterns <- c(
   # Example of line 4 for assigned stock:
   # Trailer:    A/E 9GMSJJ4 1 ASSIGNED
   line4 = START %R% "Trailer:" %R%
-    SPC %R% "A/E" %R%
-    SPC %R% capture(pattern$option_cusip_string) %R% # (13) CUSIP of the assigned option
-    SPC %R% capture(one_or_more(DGT)) %R%            # (14) Assigned quantity
-    SPC %R% capture("ASSIGNED")                      # (15) ASSIGNED
+          SPC %R% "A/E" %R%
+          SPC %R% capture(pattern$option_cusip_string) %R% # (13) CUSIP of the assigned option
+          SPC %R% capture(one_or_more(DGT)) %R%            # (14) Assigned quantity
+          SPC %R% capture("ASSIGNED")                      # (15) ASSIGNED
 )
 
 assigned_block$token_names <- c(
@@ -347,4 +347,41 @@ assigned_block$augment <- function(tokens) {
 
 assigned_block$probe <- function(lines) {
   parent.env(assigned_block)$probe(lines, assigned_block)
+}
+
+
+#
+# Exercised option block
+#
+exercised_block <- new.env(parent = option_block)
+
+exercised_block$patterns <- c(
+  # Line 1 for exersised option is the same as the line for option
+  parent.env(exercised_block)$patterns["line1"],
+
+  # Line 2 for exersised option is the same as the line for option
+  parent.env(exercised_block)$patterns["line2"],
+
+  # Line 3 is the same for all transaction types
+  parent.env(exercised_block)$patterns["line3"],
+
+  # Example of line 4 for assigned stock:
+  # Trailer:    A/E 8BKQXT2 1 EXERCISED, CLOSING CONTRACT
+  line4 = START %R% "Trailer:" %R%
+          SPC %R% "A/E" %R%
+          SPC %R% pattern$option_cusip_string %R%
+          SPC %R% DGT %R%
+          SPC %R% capture("EXERCISED") %R% "," %R%         # (16) EXERCISED
+          SPC %R% capture("CLOSING") %R%                   # (17) CLOSING
+          SPC %R% "CONTRACT"
+)
+
+# Same token names as for option transaction
+exercised_block$token_names <- parent.env(exercised_block)$token_names
+
+# Same augment function as for option transaction
+exercised_block$augment <- parent.env(exercised_block)$augment
+
+exercised_block$probe <- function(lines) {
+  parent.env(exercised_block)$probe(lines, exercised_block)
 }
