@@ -356,16 +356,16 @@ assigned_block$probe <- function(lines) {
 exercised_block <- new.env(parent = option_block)
 
 exercised_block$patterns <- c(
-  # Line 1 for exersised option is the same as the line for option
+  # Line 1 for exercised option is the same as the line for option
   parent.env(exercised_block)$patterns["line1"],
 
-  # Line 2 for exersised option is the same as the line for option
+  # Line 2 for exercised option is the same as the line for option
   parent.env(exercised_block)$patterns["line2"],
 
   # Line 3 is the same for all transaction types
   parent.env(exercised_block)$patterns["line3"],
 
-  # Example of line 4 for assigned stock:
+  # Example of line 4 for exercised option:
   # Trailer:    A/E 8BKQXT2 1 EXERCISED, CLOSING CONTRACT
   line4 = START %R% "Trailer:" %R%
           SPC %R% "A/E" %R%
