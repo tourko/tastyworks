@@ -1,3 +1,4 @@
 import(rebus)
 importFrom(dplyr, "%>%")
 importFrom(stats, "xtabs")
+export(read_confirmations)
