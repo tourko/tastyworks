@@ -57,8 +57,8 @@ total_block$token_names <- c(
 
 total_block$augment <- function(tokens) {
   tokens %>%
-    # Drop first_line and last_line colums
-    dplyr::select(-first_line, -last_line) %>%
+    # Drop .lines column
+    dplyr::select(-.lines) %>%
     # Convert number of shares to integer and dollars to nummeric
     dplyr::mutate(shares  = as.integer(shares),
                   dollars = as.numeric(stringr::str_replace_all(dollars, ",", "")))
@@ -84,10 +84,10 @@ transaction_block$patterns <- c(
 
 transaction_block$augment <- function(tokens) {
   tokens %>%
-    # Use first_line as transaction_id
-    dplyr::rename(transaction_id = first_line) %>%
-    # Drop last_line column
-    dplyr::select(-last_line) %>%
+    # Use .lines to construct transaction_id
+    dplyr::mutate(transaction_id = .lines %>% purrr::map_int(~ sum(.x))) %>%
+    # Drop ".lines" column
+    dplyr::select(-.lines) %>%
     # Convert string values in the columns to the appropriate data types
     dplyr::mutate(
       # Convert to factor

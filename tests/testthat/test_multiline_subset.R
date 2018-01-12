@@ -11,8 +11,7 @@ test_that("2 lines and a non-matching 1-line pattern", {
   )
 
   result   <- multiline$subset(lines, patterns)
-  expected <- list(lines = matrix(character(1), dimnames = list(names(patterns)))[, -1, drop = FALSE],
-                   numbers = matrix(integer(1), dimnames = list(names(patterns)))[, -1, drop = FALSE])
+  expected <- matrix(character(2), dimnames = list(c(names(patterns), ".lines")))[, -1, drop = FALSE]
 
   expect_identical(result, expected)
 })
@@ -32,9 +31,13 @@ test_that("5 lines and a matching 2-lines pattern", {
   )
 
   result   <- multiline$subset(lines, patterns)
-  expected <- list(lines = matrix(c("test line #1", "test line #2", "TEST LINE #1", "TEST LINE #2"),
-                                  nrow = length(patterns), dimnames = list(names(patterns))),
-                   numbers = matrix(c(1L, 2L, 4L, 5L), nrow = length(patterns), dimnames = list(names(patterns))))
+  #           [,1]           [,2]
+  # pattern_1 "test line #1" "TEST LINE #1"
+  # pattern_2 "test line #2" "TEST LINE #2"
+  # .lines    "1,2"          "4,5"
+  expected <- matrix(c("test line #1", "test line #2", "1,2",
+                       "TEST LINE #1", "TEST LINE #2", "4,5"),
+                     nrow = length(patterns) + 1, dimnames = list(c(names(patterns), ".lines")))
 
   expect_identical(result, expected)
 })

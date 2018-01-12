@@ -84,12 +84,22 @@ multiline$subset <- function(lines, patterns) {
   # Get the actual lines
   l <- matrix(lines[n], nrow = nrow(n), ncol = ncol(n), dimnames = dimnames(n))
 
-  list(lines = l, numbers = n)
+  # Create comma-separated list of line numbers
+  m <- n %>% dplyr::as_tibble() %>%  purrr::map_chr(~ stringr::str_c(.x, collapse = ","))
+  names(m) <-  NULL
+
+  # Append line numbers to the lines
+  rbind(l, .lines = m)
 }
 
 multiline$match <- function(lines, patterns, names = NULL) {
-  # Get the lines matching the patterns
-  s <- multiline$subset(lines, patterns)
+  m <- multiline$subset(lines, patterns)
+
+  # Get line numbers matching the patterns
+  n <- m[".lines", ] %>% stringr::str_split(pattern = ",") %>% purrr::map(~ as.integer(.x))
+
+  # Get the actual lines
+  l <- m[-which(rownames(m) == ".lines"), , drop = FALSE]
 
   # Extract tokens from the lines.
   tokens <-
@@ -98,7 +108,7 @@ multiline$match <- function(lines, patterns, names = NULL) {
     # all the tokens from teh multiple patterns
     purrr::imap_dfc(patterns,
                       # Limit the matching to the lines that have already been detected by the pattern
-                    ~ s$lines[.y, ] %>%
+                    ~ l[.y, ] %>%
                       # Extracts tokens from each line matching a pattern
                       stringr::str_match(pattern = .x) %>%
                       # The first column contains the entire matched line and we don't need it
@@ -115,13 +125,13 @@ multiline$match <- function(lines, patterns, names = NULL) {
       colnames(tokens) <- names
     }
 
-    # Remove row names from the line numbers to avoid attributes being added to the tibble
-    rownames(s$numbers) <- NULL
-    # Add "first_line" and "last_line" to indicate the line range
+    # Add ".lines" that contains line numbers mactching the patterns
     tokens <- tokens %>% dplyr::mutate(
-      first_line = s$numbers[1, ],
-      last_line  = s$numbers[nrow(s$numbers), ]
+      .lines = as.list(n)
     )
+
+    # Remove names from the line numbers
+    names(tokens$.lines) <-  NULL
   }
 
   return(tokens)
