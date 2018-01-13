@@ -2,7 +2,7 @@
 # Define as.<function>() that convert values to factors
 #
 as.reason <- function(value) {
-  factor(value, levels = c("UNSOLICITED", "ASSIGNED", "EXERCISED", "EXPIRED"))
+  factor(value, levels = c("UNSOLICITED", "ASSIGNED", "EXERCISED", "EXPIRED", "SPLIT"))
 }
 
 as.instrument <- function(value) {

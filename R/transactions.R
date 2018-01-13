@@ -168,6 +168,72 @@ transactions$process_expired <- function(blocks) {
   return(blocks)
 }
 
+transactions$process_split_options <- function(blocks) {
+  # Check if there are any split options
+  if ( !purrr::is_empty(blocks$split_option) ) {
+    split_options <- blocks$split_option
+
+    # For now we can only handle "CLOSE" options
+    if ( split_options %>% filter(position == "OPEN") %>% nrow() > 0 ) {
+      stop("OPEN options after stock split are not supported.")
+    }
+
+    # For each CLOSE option after split create an opposite dummy OPEN transaction
+    open_after_split <- split_options %>%
+      dplyr::mutate(
+        transaction_id  = transaction_id - 1L,
+        reason          = as.reason("SPLIT"),
+        position        = as.position("OPEN"),
+        action          = as.action(dplyr::if_else(action == "BUY", "SELL", "BUY")),
+        commission      = 0,
+        transaction_fee = 0,
+        additional_fee  = 0,
+        net_amount      = principal
+      )
+
+    # Append dummy open options to split_option block
+    blocks$split_option <- blocks$split_option %>%
+      dplyr::bind_rows(open_after_split)
+
+    # For each OPEN dummy option after split create an opposite dummy CLOSE option before split
+    close_before_split <- open_after_split %>%
+      dplyr::mutate(
+        transaction_id  = transaction_id,
+        position        = as.position("CLOSE"),
+        action          = as.action(dplyr::if_else(action == "BUY", "SELL", "BUY")),
+        # Drop trailing digit from the symbol
+        symbol          = stringr::str_replace(symbol, pattern = capture(one_or_more(UPPER)) %R% DGT, replacement = "\\1")
+      )
+
+    # For each dummy close_before_split we need to set cusip to that of the real option transaction
+    for (idx in seq_len(nrow(close_before_split))) {
+      r <- close_before_split[idx, ]
+      open_before_split <- blocks$option %>%
+        filter(
+          trade_date < r$trade_date,
+          reason == "UNSOLICITED",
+          action == dplyr::if_else(r$action == "BUY", "SELL", "BUY"),
+          position == "OPEN",
+          symbol == r$symbol,
+          option_type == r$option_type,
+          strike == r$strike,
+          expiration_date == r$expiration_date
+        )
+      if (nrow(open_before_split) == 1) {
+        close_before_split[idx, "cusip"] = open_before_split$cusip
+      } else {
+        stop("More work needs to be done here.")
+      }
+    }
+
+    # Append dummy close options to option block
+    blocks$option <- blocks$option %>%
+      dplyr::bind_rows(close_before_split)
+  }
+
+  return(blocks)
+}
+
 transactions$merge <- function(blocks) {
   blocks %>%
     # Merge transaction from all transaction blocks into one tibble
@@ -176,6 +242,12 @@ transactions$merge <- function(blocks) {
     dplyr::arrange(trade_date, transaction_id) %>%
     # No more need for "transaction_id"
     dplyr::select(-transaction_id)
+}
+
+filter_by_symbol <- function(transactions, symbol) {
+  # If a stock was split, it will have the same symbol followed by a digit
+  pattern = symbol %R% optional(DGT)
+  transactions %>% filter(stringr::str_detect(.$symbol, pattern))
 }
 
 #' Extract transactions from Tastywork's confirmation file(s)
@@ -218,6 +290,8 @@ read_confirmations <- function(files, add.expired = FALSE) {
   transactions$read(files) %>%
     # Process assigned stocks
     transactions$process_assigned() %>%
+    # Process options for the stocks that were split
+    transactions$process_split_options() %>%
     # Process expired options, if add.expired == TRUE
     purrr::when(add.expired ~ transactions$process_expired(.), ~ .) %>%
     # Merge transaction blocks in one data frame

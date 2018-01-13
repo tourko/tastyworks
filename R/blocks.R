@@ -393,3 +393,42 @@ exercised_block$probe <- function(lines) {
   parent.env(exercised_block)$probe(lines, exercised_block)
 }
 
+
+#
+# Split option block
+#
+split_option_block <- new.env(parent = option_block)
+
+split_option_block$patterns <- c(
+  # Line 1 for split option is the same as the line for option
+  parent.env(split_option_block)$patterns["line1"],
+
+  # Examples of line 2 for split options:
+  # "Desc: CALL UNG1 01/19/18 6 UNITED STATES NATRAL GAS FD LP ADJ 1:4 REV SPLIT DEL:25 UNG Interest/STTax: 0.00 CUSIP: 9LVZSV2"
+  line2 = START %R% "Desc:" %R%
+    SPC %R% capture(or("CALL", "PUT")) %R%           # (11) Option type (CALL or PUT)
+    SPC %R% capture(one_or_more(UPPER) %R% DGT) %R%  # (12) Symbol of the underlying stock
+    SPC %R% capture(MDY) %R%                         # (13) Expiration date
+    SPC %R% capture(pattern$strike_number) %R%       # (14) Strike
+    SPC %R% one_or_more(PRINT) %R%                   #   -  UL description
+    "Interest/STTax:" %R% SPC %R% "0.00" %R%         #   -  Interest/Tax
+    SPC %R% "CUSIP:" %R%
+    SPC %R% capture(pattern$option_cusip_string),    # (15) Option CUSIP
+
+  # Line 3 is the same for all transaction types
+  parent.env(split_option_block)$patterns["line3"],
+
+  # Line 4 for split option is the same as the line for option
+  parent.env(split_option_block)$patterns["line4"]
+)
+
+# Same token names as for option transaction
+split_option_block$token_names <- parent.env(split_option_block)$token_names
+
+# Same augment function as for option transaction
+split_option_block$augment <- parent.env(split_option_block)$augment
+
+split_option_block$probe <- function(lines) {
+  parent.env(split_option_block)$probe(lines, split_option_block)
+}
+

@@ -3,7 +3,7 @@ library(dplyr)
 context("Read confirmations")
 
 # Location of the confirmations
-confirmations_folder <- file.path("confirmations")
+confirmations_folder <- file.path(test_path(), "confirmations")
 
 test_that("Read a single confirmation file", {
   confirmation_file <- file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf")
@@ -15,7 +15,7 @@ test_that("Read a single confirmation file", {
 })
 
 test_that("Read several confirmation files", {
-  confirmation_file <- c(
+  confirmation_files <- c(
     file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-08-31-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf"),
@@ -23,7 +23,7 @@ test_that("Read several confirmation files", {
     file.path(confirmations_folder, "2017-09-06-1NE23456-confirmation.pdf")
   )
 
-  transactions <- read_confirmations(confirmation_file)
+  transactions <- read_confirmations(confirmation_files)
 
   # There must be at least 1 transactions in it
   expect_gt(nrow(transactions), 0)
@@ -77,8 +77,7 @@ test_that("Confirmation with both option and stock transactions", {
   transactions <- read_confirmations(confirmation_file)
 
   # UNG transactions
-  ung <- transactions %>%
-    filter(symbol == "UNG")
+  ung <- transactions %>% filter_by_symbol("UNG")
 
   ung_option <- ung %>%
     filter(instrument == "OPTION")
@@ -95,15 +94,14 @@ test_that("Confirmation with both option and stock transactions", {
 })
 
 test_that("Confirmation with closed options", {
-  confirmation_file <- c(
+  confirmation_files <- c(
     file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf")
   )
 
-  transactions <- read_confirmations(confirmation_file)
+  transactions <- read_confirmations(confirmation_files)
 
-  xop <- transactions %>%
-    filter(symbol == "XOP")
+  xop <- transactions %>% filter_by_symbol("XOP")
 
   xop_open    <- xop %>% filter(reason == "UNSOLICITED", position == "OPEN")
   xop_close   <- xop %>% filter(reason == "UNSOLICITED", position == "CLOSE")
@@ -123,18 +121,17 @@ test_that("Confirmation with closed options", {
 })
 
 test_that("Confirmation with assigned stock", {
-  confirmation_file <- c(
+  confirmation_files <- c(
     file.path(confirmations_folder, "2017-10-18-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-10-19-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-11-09-1NE23456-confirmation.pdf"),
     file.path(confirmations_folder, "2017-12-08-1NE23456-confirmation.pdf")
   )
 
-  transactions <- read_confirmations(confirmation_file)
+  transactions <- read_confirmations(confirmation_files)
 
   # Filter UAL transactions
-  ual <- transactions %>%
-    filter(symbol == "UAL")
+  ual <- transactions %>% filter_by_symbol("UAL")
 
   # Filter assigned stock
   assigned_stock <- ual %>%
@@ -167,4 +164,34 @@ test_that("Confirmation with assigned stock", {
   expect_true(assigned_option$additional_fee == 0)
   expect_true(assigned_option$net_amount == 0)
   expect_true(assigned_option$tag_number == assigned_stock$tag_number)
+})
+
+test_that("Filter by symbol with split option", {
+  confirmation_files <- c(
+    file.path(confirmations_folder, "2017-12-15-1NE23456-confirmation.pdf"),
+    file.path(confirmations_folder, "2018-01-05-1NE23456-confirmation.pdf")
+  )
+
+  transactions <- read_confirmations(confirmation_files)
+
+  # Filter UNG transactions
+  ung <- transactions %>% filter_by_symbol("UNG")
+
+  expect_equal(nrow(ung), 5)
+})
+
+test_that("Transactions with a split option", {
+  confirmation_files <- c(
+    file.path(confirmations_folder, "2017-12-15-1NE23456-confirmation.pdf"),
+    file.path(confirmations_folder, "2018-01-05-1NE23456-confirmation.pdf")
+  )
+
+  transactions <- read_confirmations(confirmation_files)
+
+  # Filter UNG options
+  ung_options <- transactions %>%
+    filter_by_symbol("UNG") %>%
+    filter(instrument == "OPTION")
+
+  expect_equal(nrow(ung_options), 4)
 })

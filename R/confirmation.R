@@ -63,10 +63,11 @@ confirmation$process <- function(file) {
   lines <- confirmation$read(file)
 
   transactions <- list(
-    option    = option_block,
-    stock     = stock_block,
-    assigned  = assigned_block,
-    exercised = exercised_block
+    option       = option_block,
+    stock        = stock_block,
+    assigned     = assigned_block,
+    exercised    = exercised_block,
+    split_option = split_option_block
   ) %>% purrr::map(~ lines %>% .x$probe())
 
   # Extract confrimation totals from the lines
