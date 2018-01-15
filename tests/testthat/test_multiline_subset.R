@@ -41,3 +41,13 @@ test_that("5 lines and a matching 2-lines pattern", {
 
   expect_identical(result, expected)
 })
+
+test_that("No lines and no patterns", {
+  lines <- c()
+  patterns <- c()
+
+  result   <- multiline$subset(lines, patterns)
+  expected <- matrix(NA, nrow = 0, ncol = 0)
+
+  expect_identical(result, expected)
+})

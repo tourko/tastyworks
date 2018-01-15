@@ -71,7 +71,7 @@ confirmation$process <- function(file) {
   ) %>% purrr::map(~ lines %>% .x$probe())
 
   # Extract confrimation totals from the lines
-  totals <- total_block$probe(lines)
+  totals <- total_block_factory$new()$probe(lines)
 
   if ( !confirmation$validate(transactions, totals) ) {
     print(lines)

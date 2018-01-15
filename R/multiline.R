@@ -78,6 +78,10 @@ multiline$detect <- function(lines, patterns) {
 }
 
 multiline$subset <- function(lines, patterns) {
+  if ( is.null(lines) || is.null(patterns) ) {
+    return( matrix(NA, nrow = 0, ncol = 0) )
+  }
+
   # Get line numbers matching the patterns
   n <- multiline$detect(lines, patterns)
 
@@ -94,6 +98,10 @@ multiline$subset <- function(lines, patterns) {
 
 multiline$match <- function(lines, patterns, names = NULL) {
   m <- multiline$subset(lines, patterns)
+
+  if ( identical(m, matrix(NA, nrow = 0, ncol = 0)) ) {
+    return(dplyr::tibble())
+  }
 
   # Get line numbers matching the patterns
   n <- m[".lines", ] %>% stringr::str_split(pattern = ",") %>% purrr::map(~ as.integer(.x))
