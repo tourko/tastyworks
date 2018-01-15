@@ -6,8 +6,10 @@ orders$create <- function(transactions) {
   transactions %>%
     # Get the first letter of the "tag_number"
     dplyr::mutate(tag_letter = stringr::str_sub(tag_number, 1, 1)) %>%
+    # Drop trailing digit from the symbol. This handles stock split.
+    dplyr::mutate(underlying = stringr::str_replace(symbol, pattern = capture(one_or_more(UPPER)) %R% DGT, replacement = "\\1")) %>%
     # "Wrap" transactions by "trade_date", "symbol" and the first letter of the "tag_number"
-    tidyr::nest(-trade_date, -reason, -symbol, -tag_letter, .key = "transactions") %>%
+    tidyr::nest(-trade_date, -reason, -underlying, -tag_letter, .key = "transactions") %>%
     # Drop "tag_letter"
     dplyr::select(-tag_letter) %>%
     # Add "order_id" column
@@ -94,8 +96,8 @@ orders$classify <-  function(orders) {
     # .   ......        ...
     dplyr::mutate(order_type = factor(order_type, levels = c("OPEN", "CLOSE", "ROLL"))) %>%
     # Append "order_type" to the orders
-    inner_join(orders, by = "order_id") %>%
-    select(order_id, trade_date, order_type, everything())
+    dplyr::inner_join(orders, by = "order_id") %>%
+    dplyr::select(order_id, trade_date, order_type, dplyr::everything())
 }
 
 orders$summarise <-  function(orders) {
@@ -115,7 +117,7 @@ orders$summarise <-  function(orders) {
                     # Sum up transaction and additional fee
                     purrr::map_dbl( ~ -sum(.$transaction_fee + .$additional_fee) )
     ) %>%
-    select(order_id:symbol, credit_debit:fees, everything())
+    dplyr::select(order_id:underlying, credit_debit:fees, dplyr::everything())
 }
 
 orders$chain <-  function(orders) {
@@ -224,7 +226,10 @@ orders$chain <-  function(orders) {
     # Convert "order_id" to integer
     purrr::map(~ .x %>% dplyr::mutate(order_id = as.integer(order_id))) %>%
     # Put real orders in place of "order_id" by joining with "orders" data frame
-    purrr::map(~ dplyr::inner_join(.x, orders, by = "order_id"))
+    purrr::map(~ dplyr::inner_join(.x, orders, by = "order_id")) %>%
+    # Drop dummy SPLIT orders
+    purrr::map(~ .x %>% dplyr::filter(reason != "SPLIT"))
+
 
   # Names elements in the chain list: CHAIN_*
   names(chains) <- stringr::str_c("CHAIN", stringr::str_pad(seq_along(chains), stringr::str_length(length(chains)), pad = "0"), sep = "_")

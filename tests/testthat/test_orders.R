@@ -11,8 +11,8 @@ test_that("Simple orders", {
   transactions <- read_confirmations(confirmation_file)
   orders <- orders$create(transactions)
 
-  xop <- orders %>% filter(symbol == "XOP")
-  fb  <- orders %>% filter(symbol == "FB")
+  xop <- orders %>% filter(underlying == "XOP")
+  fb  <- orders %>% filter(underlying == "FB")
 
   # There should be 2 orders.
   expect_equal(nrow(orders), 2)
