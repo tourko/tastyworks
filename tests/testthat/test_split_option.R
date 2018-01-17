@@ -8,7 +8,7 @@ test_that("Buy To Close split option", {
     "Trailer: UNSOLICITED, CLOSING CONTRACT"
   )
 
-  result   <- lines %>% split_option_block$probe()
+  result   <- split_option_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("01/05/18"),
                              reason          = as.reason("UNSOLICITED"),

@@ -8,7 +8,7 @@ test_that("Sell To Open option", {
     "Trailer: UNSOLICITED, OPEN CONTRACT"
   )
 
-  result   <- lines %>% option_block$probe()
+  result   <- option_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("08/30/17"),
                              reason          = as.reason("UNSOLICITED"),
@@ -42,7 +42,7 @@ test_that("Buy To Open option", {
     "Trailer: UNSOLICITED, OPEN CONTRACT"
   )
 
-  result   <- lines %>% option_block$probe()
+  result   <- option_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("08/30/17"),
                              reason          = as.reason("UNSOLICITED"),
@@ -74,7 +74,7 @@ test_that("Buy To Close option", {
     "Trailer: UNSOLICITED, CLOSING CONTRACT"
   )
 
-  result   <- lines %>% option_block$probe()
+  result   <- option_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("09/01/17"),
                              reason          = as.reason("UNSOLICITED"),
@@ -106,7 +106,7 @@ test_that("Sell To Close option", {
     "Trailer: UNSOLICITED, CLOSING CONTRACT"
   )
 
-  result   <- lines %>% option_block$probe()
+  result   <- option_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("10/18/17"),
                              reason          = as.reason("UNSOLICITED"),

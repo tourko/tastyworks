@@ -63,15 +63,15 @@ confirmation$process <- function(file) {
   lines <- confirmation$read(file)
 
   transactions <- list(
-    option       = option_block,
-    stock        = stock_block,
-    assigned     = assigned_block,
-    exercised    = exercised_block,
-    split_option = split_option_block
+    option       = option_block$new(),
+    stock        = stock_block$new(),
+    assigned     = assigned_block$new(),
+    exercised    = exercised_block$new(),
+    split_option = split_option_block$new()
   ) %>% purrr::map(~ lines %>% .x$probe())
 
   # Extract confrimation totals from the lines
-  totals <- total_block_factory$new()$probe(lines)
+  totals <- total_block$new()$probe(lines)
 
   if ( !confirmation$validate(transactions, totals) ) {
     print(lines)

@@ -8,7 +8,7 @@ test_that("Buy To Open stock", {
     "Trailer: UNSOLICITED, PRODUCT DESCRIPTION UNDER SEPARATE COVER"
   )
 
-  result   <- lines %>% stock_block$probe()
+  result   <- stock_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("12/15/17"),
                              reason          = as.reason("UNSOLICITED"),
@@ -37,7 +37,7 @@ test_that("Sell To Close stock", {
     "Trailer: UNSOLICITED"
   )
 
-  result   <- lines %>% stock_block$probe()
+  result   <- stock_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("12/08/17"),
                              reason          = as.reason("UNSOLICITED"),

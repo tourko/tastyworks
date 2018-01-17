@@ -1,4 +1,4 @@
-block_factory <- R6::R6Class("Block",
+block <- R6::R6Class("Block", class = FALSE,
   private = list(
     patterns = c(),
     token_names = c(),

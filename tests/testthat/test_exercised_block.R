@@ -8,7 +8,7 @@ test_that("Excercised Call option", {
     "Trailer: A/E 8BKQXT2 1 EXERCISED, CLOSING CONTRACT"
   )
 
-  result   <- lines %>% exercised_block$probe()
+  result   <- exercised_block$new()$probe(lines)
   expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
                              trade_date      = lubridate::mdy("11/15/17"),
                              reason          = as.reason("EXERCISED"),
