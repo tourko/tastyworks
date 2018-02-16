@@ -23,7 +23,7 @@ confirmation$process_document <- function(doc) {
     purrr::flatten_chr()
 }
 
-confirmation$read <- function(file) {
+confirmation$process <- function(file) {
   # Read the document
   pdftools::pdf_text(file) %>% confirmation$process_document()
 }
@@ -56,11 +56,11 @@ confirmation$validate <- function(transactions, totals) {
   identical(transactions_total, confirmation_total)
 }
 
-confirmation$process <- function(file) {
+confirmation$read <- function(file) {
   message(paste("Proccessing confirmation", file))
 
   # Extract lines from the document
-  lines <- confirmation$read(file)
+  lines <- confirmation$process(file)
 
   transactions <- list(
     option       = option_block$new(),
@@ -70,7 +70,7 @@ confirmation$process <- function(file) {
     split_option = split_option_block$new()
   ) %>% purrr::map(~ lines %>% .x$probe())
 
-  # Extract confrimation totals from the lines
+  # Extract confirmation totals from the lines
   totals <- total_block$new()$probe(lines)
 
   if ( !confirmation$validate(transactions, totals) ) {
