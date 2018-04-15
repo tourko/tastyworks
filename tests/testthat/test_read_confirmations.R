@@ -195,3 +195,4 @@ test_that("Transactions with a split option", {
 
   expect_equal(nrow(ung_options), 4)
 })
+

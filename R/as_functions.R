@@ -48,6 +48,6 @@ pattern <- list(
   # Option CUSIP format - seven-character alphanumeric: "9H82162"
   option_cusip_string = repeated(ALNUM, 7),
 
-  # Stock CUSIP format - nine-digit string: "369604103"
-  stock_cusip_string = repeated(DIGIT, 9)
+  # Stock CUSIP format - nine-digit alphanumeric: "369604103", "H8817H100"
+  stock_cusip_string = repeated(ALNUM, 9)
 )

@@ -29,6 +29,35 @@ test_that("Buy To Open stock", {
   expect_identical(result, expected)
 })
 
+test_that("Stock with an alphanumeric CUSIP", {
+  lines <- c(
+    "2 B 02/12/18 02/14/18 100 RIG 9.6200000 962.00 5.00 0.00 0.08 Z4276 967.08 TUA0214 6 1",
+    "Desc: ***TRANSOCEAN LTD US LISTED Interest/STTax: 0.00 CUSIP: H8817H100",
+    "Currency: USD ReportedPX: MarkUp/Down:",
+    "Trailer: UNSOLICITED"
+  )
+
+  result   <- stock_block$new()$probe(lines)
+  expected <- tibble::tibble(transaction_id  = 1L+2L+3L+4L,
+                             trade_date      = lubridate::mdy("02/12/18"),
+                             reason          = as.reason("UNSOLICITED"),
+                             action          = as.action("BUY"),
+                             position        = as.position("OPEN"),
+                             symbol          = "RIG",
+                             instrument      = as.instrument("STOCK"),
+                             quantity        = 100L,
+                             price           = 9.62,
+                             principal       = 962.00,
+                             commission      = 5.00,
+                             transaction_fee = 0.00,
+                             additional_fee  = 0.08,
+                             net_amount      = 967.08,
+                             cusip           = "H8817H100",
+                             tag_number      = "Z4276")
+
+  expect_identical(result, expected)
+})
+
 test_that("Sell To Close stock", {
   lines <- c(
     "2 S 12/08/17 12/12/17 100 UAL 64.3801000 6,438.01 0.00 0.16 0.08 T2198 6,437.77 TUA1212 6 1",
