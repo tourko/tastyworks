@@ -11,4 +11,4 @@ To learn how to read Tastyworks's confirmations:
 
 `library(tastyworks)`
 
-`?read_confirmation`
+`?read_confirmations`
