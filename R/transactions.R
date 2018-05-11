@@ -174,7 +174,7 @@ transactions$process_split_options <- function(blocks) {
     split_options <- blocks$split_option
 
     # For now we can only handle "CLOSE" options
-    if ( split_options %>% filter(position == "OPEN") %>% nrow() > 0 ) {
+    if ( split_options %>% dplyr::filter(position == "OPEN") %>% nrow() > 0 ) {
       stop("OPEN options after stock split are not supported.")
     }
 
@@ -209,7 +209,7 @@ transactions$process_split_options <- function(blocks) {
     for (idx in seq_len(nrow(close_before_split))) {
       r <- close_before_split[idx, ]
       open_before_split <- blocks$option %>%
-        filter(
+        dplyr::filter(
           trade_date < r$trade_date,
           reason == "UNSOLICITED",
           action == dplyr::if_else(r$action == "BUY", "SELL", "BUY"),
@@ -219,10 +219,12 @@ transactions$process_split_options <- function(blocks) {
           strike == r$strike,
           expiration_date == r$expiration_date
         )
+
+      # There must be exactly one open transaction before split
       if (nrow(open_before_split) == 1) {
         close_before_split[idx, "cusip"] = open_before_split$cusip
       } else {
-        stop("More work needs to be done here.")
+        close_before_split[idx, "cusip"] = NA
       }
     }
 
