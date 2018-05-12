@@ -117,7 +117,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' ## Read all confimation files in a "confirmations":
+#' ## Read all confirmations in a "confirmations" folder and do check intergrity:
 #' # A template for confirmation file name (YYYY-MM-DD-xxxxxxxx-confirmation.pdf)
 #' confirmation_pattern <-
 #'  START %R% YMD %R% "-" %R%
@@ -130,7 +130,7 @@
 #'                     full.names = TRUE)
 #'
 #' # Read the files
-#' transactions <- read_confirmations(files)
+#' transactions <- read_confirmations(files, check.integrity = TRUE)
 #' }
 #'
 #' @export

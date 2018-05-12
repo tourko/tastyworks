@@ -1,7 +1,7 @@
 Package: tastyworks
 Type: Package
 Title: Extract Transactions from the Tastywork's confirmations
-Version: 0.2.1
+Version: 0.2.2
 Author: Andrey Tourkó
 Maintainer: Andrey Tourkó <tourko@gmail.com>
 Description: This package extracts transactions from trade confirmations from Tastywork's and puts them in a single dataframe.
