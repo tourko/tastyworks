@@ -32,4 +32,20 @@ test_that("Buy To Close split option", {
   expect_identical(result, expected)
 })
 
+test_that("Read confirmation with a CLOSE split option", {
+  confirmations_folder <- file.path(test_path(), "confirmations")
+
+  confirmation_files <- c(
+    file.path(confirmations_folder, "2018-01-05-1NE23456-confirmation.pdf")
+  )
+
+  transactions <- read_confirmations(confirmation_files)
+
+  # Filter UNG options
+  ung_options <- transactions %>%
+    filter_by_symbol("UNG") %>%
+    filter(instrument == "OPTION")
+
+  expect_equal(nrow(ung_options), 3)
+})
 
