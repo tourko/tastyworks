@@ -4,9 +4,16 @@
 #' extracts transactions from each file and merges them together into a single data frame.
 #'
 #' @param files a vector of path names to the files.
-#' @param add.expired logical that indicates whether bogus transactions for expired options should be added.
+#' @param add.expired logical that controls whether bogus transactions for expired options should be added.
+#' @param check.integrity logical that controls whether to check transactions integrity.
 #'
-#' @details ...
+#' @details Tastyworks generates a confirmation only if there was any trading activity druring the day.
+#' That makes it difficult to detect any missing confirmations. And there are known cases when
+#' confirmations were missing.
+#'
+#' Specifying check.integrity = TRUE helps to identify if there are \emph{potentially} any missing transactions.
+#' It checks whether the quantity of traded stocks/options in the \emph{closing} transaction is greater than
+#' the quantity in the corresponding \emph{opening} transaction. This is the symptom of the missing confirmations.
 #'
 #' @return The output is a data frame, where each record represents one transaction. The data frame has
 #' the following variables:
@@ -127,7 +134,7 @@
 #' }
 #'
 #' @export
-read_confirmations <- function(files, add.expired = FALSE) {
+read_confirmations <- function(files, add.expired = FALSE, check.integrity = FALSE) {
   transactions$read(files) %>%
     # Process assigned stocks
     transactions$process_assigned() %>%
@@ -136,5 +143,7 @@ read_confirmations <- function(files, add.expired = FALSE) {
     # Process expired options, if add.expired == TRUE
     purrr::when(add.expired ~ transactions$process_expired(.), ~ .) %>%
     # Merge transaction blocks in one data frame
-    transactions$merge()
+    transactions$merge() %>%
+    # Check transactions integrity, if check.integrity == TRUE
+    purrr::when(check.integrity ~ transactions$check_integrity(.), ~ .)
 }

@@ -246,6 +246,53 @@ transactions$merge <- function(blocks) {
     dplyr::select(-transaction_id)
 }
 
+transactions$check_integrity <- function(transactions) {
+  # Find CUSIPs that have greater CLOSE quantity than OPEN quantity
+  close_gt_open <- transactions %>%
+    # Select "cusip", "position" and "quantity" columns
+    dplyr::select(cusip, position, quantity) %>%
+    # Group by CUSIP and position (OPEN and CLOSE)
+    dplyr::group_by(cusip, position) %>%
+    # Sum the quantities for each CUSIP and position
+    # A tibble: 10 x 3
+    # Groups:   cusip [?]
+    #     cusip position quantity
+    #     <chr>   <fctr>    <int>
+    # 1 8BWGYG3     OPEN        1
+    # 2 8BWGYG3    CLOSE        1
+    # 3 8BWGYJ1     OPEN        1
+    # 4 8BWGYJ1    CLOSE        1
+    # .     ...      ...        .
+    dplyr::summarise(quantity = sum(quantity)) %>%
+    # Convert to a data frame with the OPEN and CLOSE vs. quantities for each CUSIP
+    #      cusip  OPEN CLOSE
+    # *   <chr>  <int> <int>
+    # 1 8BKQXT2     1     1
+    # 2 8BRRSQ6     1     1
+    # 3 8BRTKX9     1     1
+    # 4 8BRTNB5     0     1
+    # .     ...     .     .
+    tidyr::spread(position, quantity, fill = 0) %>%
+    # Add OPEN and/or CLOSE columns if they don't exist
+    dplyr::mutate(OPEN  = if (exists("OPEN",  where = .)) as.integer(OPEN)  else 0L) %>%
+    dplyr::mutate(CLOSE = if (exists("CLOSE", where = .)) as.integer(CLOSE) else 0L) %>%
+    # Find CUSIPs that have greater CLOSE quantity than OPEN quantity
+    dplyr::filter(CLOSE > OPEN)
+
+  # Print out orphant transactions as warnings
+  if (nrow(close_gt_open) > 0) {
+    orphants <- transactions %>%
+      dplyr::filter(cusip %in% close_gt_open$cusip)
+
+    warning("There are CLOSE transactions that have greater quantity than OPEN transactions:")
+    for (idx in seq_len(nrow(orphants))) {
+      orphants[idx, ] %>% as.matrix() %>% paste(collapse = " ") %>% warning()
+    }
+  }
+
+  return(transactions)
+}
+
 filter_by_symbol <- function(transactions, symbol) {
   # If a stock was split, it will have the same symbol followed by a digit
   pattern = symbol %R% optional(DGT)

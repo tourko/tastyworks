@@ -4,12 +4,14 @@
 \alias{read_confirmations}
 \title{Read transactions from the Tastywork's confirmations}
 \usage{
-read_confirmations(files, add.expired = FALSE)
+read_confirmations(files, add.expired = FALSE, check.integrity = FALSE)
 }
 \arguments{
 \item{files}{a vector of path names to the files.}
 
-\item{add.expired}{logical that indicates whether bogus transactions for expired options should be added.}
+\item{add.expired}{logical that controls whether bogus transactions for expired options should be added.}
+
+\item{check.integrity}{logical that controls whether to check transactions integrity.}
 }
 \value{
 The output is a data frame, where each record represents one transaction. The data frame has
@@ -103,7 +105,13 @@ This function reads Tastywork's confirmation files, which are in PDF format,
 extracts transactions from each file and merges them together into a single data frame.
 }
 \details{
-...
+Tastyworks generates a confirmation only if there was any trading activity druring the day.
+That makes it difficult to detect any missing confirmations. And there are known cases when
+confirmations were missing.
+
+Specifying check.integrity = TRUE helps to identify if there are \emph{potentially} any missing transactions.
+It checks whether the quantity of traded stocks/options in the \emph{closing} transaction is greater than
+the quantity in the corresponding \emph{opening} transaction. This is the symptom of the missing confirmations.
 }
 \examples{
 \dontrun{
