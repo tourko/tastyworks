@@ -247,6 +247,8 @@ transactions$merge <- function(blocks) {
 }
 
 transactions$check_integrity <- function(transactions) {
+  message("Checking transactions integrity...")
+
   # Find CUSIPs that have greater CLOSE quantity than OPEN quantity
   close_gt_open <- transactions %>%
     # Select "cusip", "position" and "quantity" columns
@@ -284,9 +286,9 @@ transactions$check_integrity <- function(transactions) {
     orphants <- transactions %>%
       dplyr::filter(cusip %in% close_gt_open$cusip)
 
-    warning("There are CLOSE transactions that have greater quantity than OPEN transactions:")
+    warning("There are CLOSE transactions that have greater quantity than OPEN transactions:", call. = FALSE)
     for (idx in seq_len(nrow(orphants))) {
-      orphants[idx, ] %>% as.matrix() %>% paste(collapse = " ") %>% warning()
+      orphants[idx, ] %>% as.matrix() %>% paste(collapse = " ") %>% warning(call. = FALSE)
     }
   }
 

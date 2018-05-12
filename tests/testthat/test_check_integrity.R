@@ -8,9 +8,9 @@ confirmations_folder <- file.path(test_path(), "confirmations")
 test_that("OPEN transactions only", {
   confirmation_file <- file.path(confirmations_folder, "2017-08-30-1NE23456-confirmation.pdf")
 
-  # Only a message about the file being processes is expected and no warnings.
+  # A message about integrity checking is expected and no warnings
   expect_message(read_confirmations(confirmation_file, check.integrity = TRUE),
-                 regexp = paste("Proccessing confirmation", confirmation_file))
+                 regexp = "Checking transactions integrity...")
 })
 
 test_that("CLOSE transaction without an OPEN transaction", {
@@ -29,7 +29,7 @@ test_that("OPEN and matching CLOSE transaction", {
     file.path(confirmations_folder, "2017-09-01-1NE23456-confirmation.pdf")
   )
 
-  # Only a message about the files being processes is expected and no warnings.
+  # A message about integrity checking is expected and no warnings
   expect_message(read_confirmations(confirmation_files, check.integrity = TRUE),
-                 regexp = paste("Proccessing confirmation"))
+                 regexp = "Checking transactions integrity...")
 })
